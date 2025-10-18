@@ -1,50 +1,76 @@
-from database.connection import execute_query
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, request, jsonify
+from models.usuario import UsuarioModel
 
-class UsuarioModel:
-    @staticmethod
-    def cadastrar(nome, email, senha, tipo_perfil):
-        """Cadastra um novo usuário"""
-        try:
-            # Verificar se email já existe
-            usuario_existente = UsuarioModel.buscar_por_email(email)
-            if usuario_existente:
-                return None, "Email já cadastrado"
-            
-            senha_hash = generate_password_hash(senha)
-            
-            sql = "INSERT INTO usuario (nome, email, senha, tipo_perfil) VALUES (%s, %s, %s, %s)"
-            params = (nome, email, senha_hash, tipo_perfil)
-            
-            usuario_id = execute_query(sql, params)
-            
-            if usuario_id:
-                # Se for motorista, criar registro na tabela motorista
-                if tipo_perfil == 'MOTORISTA':
-                    from models.motorista import MotoristaModel
-                    MotoristaModel.cadastrar(usuario_id, f"CNH-{usuario_id}")
-                
-                return usuario_id, "Usuário cadastrado com sucesso"
-            else:
-                return None, "Erro ao cadastrar usuário"
-                
-        except Exception as e:
-            print(f"✗ Erro no cadastro: {e}")
-            return None, f"Erro interno: {str(e)}"
+usuario_bp = Blueprint('usuarios', __name__)
 
-    @staticmethod
-    def buscar_por_email(email):
-        sql = "SELECT * FROM usuario WHERE email = %s"
-        return execute_query(sql, (email,), fetch=True)
+@usuario_bp.route('/usuarios', methods=['GET'])
+def listar_usuarios():
+    try:
+        usuarios = UsuarioModel.listar_usuarios()
+        return jsonify({
+            'success': True,
+            'usuarios': usuarios
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-    @staticmethod
-    def verificar_login(email, senha):
-        usuario = UsuarioModel.buscar_por_email(email)
-        if usuario and check_password_hash(usuario['senha'], senha):
-            return usuario
-        return None
+@usuario_bp.route('/usuarios', methods=['POST'])
+def criar_usuario():
+    try:
+        data = request.get_json()
+        
+        usuario_id, mensagem = UsuarioModel.cadastrar(
+            data['nome'],
+            data['email'], 
+            data['senha'],
+            data['tipo_perfil']
+        )
+        
+        if usuario_id:
+            return jsonify({
+                'success': True,
+                'message': mensagem,
+                'usuario_id': usuario_id
+            }), 201
+        else:
+            return jsonify({
+                'success': False, 
+                'message': mensagem
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-    @staticmethod
-    def listar_usuarios():
-        sql = "SELECT id_usuario, nome, email, tipo_perfil FROM usuario ORDER BY nome"
-        return execute_query(sql, fetch_all=True) or []
+@usuario_bp.route('/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        usuario = UsuarioModel.verificar_login(data['email'], data['senha'])
+        
+        if usuario:
+            return jsonify({
+                'success': True,
+                'message': 'Login realizado',
+                'usuario': {
+                    'id': usuario['u_usuario'],
+                    'nome': usuario['nome'],
+                    'email': usuario['email']
+                }
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Credenciais inválidas'
+            }), 401
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

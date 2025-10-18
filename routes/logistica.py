@@ -1,28 +1,16 @@
 from flask import Blueprint, request, jsonify
-from controllers.logistica_controller import LogisticaController
+from controllers.logisticaController import LogisticaController
+
 
 logistica_bp = Blueprint('logistica', __name__)
 
-@logistica_bp.route('/api/logistica/registrar-carga', methods=['POST'])
+@logistica_bp.route('/logistica/registrar-carga', methods=['POST'])
 def registrar_carga_roteirizar():
+    """Processo completo: registra carga e cria rota/entrega"""
     try:
-        dados = request.get_json()
+        data = request.get_json()
         
-        # Campos obrigatórios
-        campos_obrigatorios = [
-            'volume', 'peso', 'dataprevista', 'origem', 
-            'destino', 'u_veiculo', 'u_motorista'
-        ]
-        
-        for campo in campos_obrigatorios:
-            if not dados.get(campo):
-                return jsonify({
-                    'success': False,
-                    'message': f'Campo {campo} é obrigatório'
-                }), 400
-        
-        # Processar registro
-        success, result = LogisticaController.registrar_carga_e_roteirizar(dados)
+        success, result = LogisticaController.registrar_carga_e_roteirizar(data)
         
         if success:
             return jsonify({
@@ -39,43 +27,28 @@ def registrar_carga_roteirizar():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@logistica_bp.route('/api/entregas', methods=['GET'])
-def listar_entregas():
+@logistica_bp.route('/logistica/entregas-ativas', methods=['GET'])
+def listar_entregas_ativas():
+    """Lista entregas em andamento"""
     try:
-        filtro_status = request.args.get('status')
+        success, result = LogisticaController.listar_entregas_ativas()
         
-        from models.entrega_model import EntregaModel
-        entregas = EntregaModel.listar_entregas(filtro_status)
-        
-        return jsonify({
-            'success': True,
-            'entregas': entregas
-        }), 200
-        
+        if success:
+            return jsonify({
+                'success': True,
+                'entregas': result
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result
+            }), 400
+            
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
-        }), 500
-
-@logistica_bp.route('/api/cargas', methods=['GET'])
-def listar_cargas():
-    try:
-        filtro_status = request.args.get('status')
-        
-        from models.carga_model import CargaModel
-        cargas = CargaModel.listar_cargas(filtro_status)
-        
-        return jsonify({
-            'success': True,
-            'cargas': cargas
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500

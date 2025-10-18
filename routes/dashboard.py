@@ -1,9 +1,9 @@
-from flask import Blueprint, request, jsonify
-from controllers.dashboard_controller import DashboardController
+from flask import Blueprint, jsonify
+from controllers.dashboardController import DashboardController
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
-@dashboard_bp.route('/api/dashboard', methods=['GET'])
+@dashboard_bp.route('/dashboard', methods=['GET'])
 def get_dashboard_completo():
     """Retorna todos os dados do dashboard"""
     try:
@@ -12,8 +12,7 @@ def get_dashboard_completo():
         if success:
             return jsonify({
                 'success': True,
-                'data': result,
-                'timestamp': datetime.now().isoformat()
+                'data': result
             }), 200
         else:
             return jsonify({
@@ -24,12 +23,12 @@ def get_dashboard_completo():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@dashboard_bp.route('/api/dashboard/alertas', methods=['GET'])
+@dashboard_bp.route('/dashboard/alertas', methods=['GET'])
 def get_alertas_dashboard():
-    """Retorna apenas dados de alertas (para atualização em tempo real)"""
+    """Retorna apenas dados de alertas"""
     try:
         success, result = DashboardController.get_alertas_resumido()
         
@@ -47,12 +46,12 @@ def get_alertas_dashboard():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@dashboard_bp.route('/api/dashboard/entregas', methods=['GET'])
+@dashboard_bp.route('/dashboard/entregas', methods=['GET'])
 def get_entregas_dashboard():
-    """Retorna apenas dados de entregas (para atualização em tempo real)"""
+    """Retorna apenas dados de entregas"""
     try:
         success, result = DashboardController.get_entregas_resumido()
         
@@ -70,27 +69,26 @@ def get_entregas_dashboard():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@dashboard_bp.route('/api/dashboard/metricas-rapidas', methods=['GET'])
+@dashboard_bp.route('/dashboard/metricas-rapidas', methods=['GET'])
 def get_metricas_rapidas():
-    """Retorna apenas as métricas rápidas para cards do dashboard"""
+    """Retorna métricas rápidas para cards"""
     try:
-        from models.dashboard_model import DashboardModel
+        from models.dashboard import DashboardModel
         
         estatisticas = DashboardModel.get_estatisticas_entregas()
         metricas = DashboardModel.get_metricas_operacionais()
         alertas = DashboardModel.get_alertas_ativos()
         
         metricas_rapidas = {
-            'entregas_total': estatisticas['total_entregas'],
-            'entregues_hoje': estatisticas['entregues'],  # Simplificado - em produção filtrar por data
+            'total_entregas': estatisticas['total_entregas'],
+            'entregues': estatisticas['entregues'],
             'em_transito': estatisticas['em_transito'],
             'atrasadas': estatisticas['atrasadas'],
             'alertas_ativos': len(alertas),
-            'veiculos_disponiveis': metricas['veiculos_disponiveis'],
-            'motoristas_ativos': metricas['motoristas_ativos']
+            'veiculos_disponiveis': metricas['veiculos_disponiveis']
         }
         
         return jsonify({
@@ -101,5 +99,5 @@ def get_metricas_rapidas():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500

@@ -1,117 +1,92 @@
 from flask import Blueprint, request, jsonify
-from controllers.motorista_controller import MotoristaController
+from models.motorista import MotoristaModel
 
-motorista_bp = Blueprint('motorista', __name__)
+motorista_bp = Blueprint('motoristas', __name__)
 
-@motorista_bp.route('/api/motorista/<int:u_motorista>/entregas', methods=['GET'])
-def listar_entregas_motorista(u_motorista):
+@motorista_bp.route('/motoristas', methods=['GET'])
+def listar_motoristas():
+    """Lista todos os motoristas"""
     try:
-        filtro_status = request.args.get('status')
-        
-        success, result = MotoristaController.get_entregas_motorista(u_motorista, filtro_status)
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'entregas': result
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'message': result
-            }), 400
-            
+        motoristas = MotoristaModel.listar_motoristas()
+        return jsonify({
+            'success': True,
+            'motoristas': motoristas
+        }), 200
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@motorista_bp.route('/api/motorista/<int:u_motorista>/entregas/<int:identrega>/status', methods=['PUT'])
-def atualizar_status_entrega(u_motorista, identrega):
+@motorista_bp.route('/motoristas', methods=['POST'])
+def criar_motorista():
+    """Cadastra um novo motorista"""
     try:
-        dados = request.get_json()
-        novo_status = dados.get('status')
-        observacoes = dados.get('observacoes')
+        data = request.get_json()
         
-        if not novo_status:
-            return jsonify({
-                'success': False,
-                'message': 'Status é obrigatório'
-            }), 400
-        
-        success, message = MotoristaController.atualizar_status_entrega(
-            u_motorista, identrega, novo_status, observacoes
+        motorista_id, mensagem = MotoristaModel.cadastrar(
+            data['cnh'],
+            data.get('status', 'ATIVO'),
+            data.get('u_rota')
         )
         
-        if success:
+        if motorista_id:
             return jsonify({
                 'success': True,
-                'message': message
-            }), 200
+                'message': mensagem,
+                'motorista_id': motorista_id
+            }), 201
         else:
             return jsonify({
                 'success': False,
-                'message': message
+                'message': mensagem
             }), 400
             
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
         }), 500
 
-@motorista_bp.route('/api/motorista/<int:u_motorista>/entregas/<int:identrega>/simular', methods=['POST'])
-def simular_viagem(u_motorista, identrega):
+@motorista_bp.route('/motoristas/<int:u_motorista>/entregas', methods=['GET'])
+def listar_entregas_motorista(u_motorista):
+    """Lista entregas de um motorista específico"""
     try:
-        success, resultados = MotoristaController.simular_viagem(u_motorista, identrega)
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'message': 'Simulação concluída',
-                'resultados': resultados
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Erro na simulação',
-                'resultados': resultados
-            }), 400
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Erro interno: {str(e)}'
-        }), 500
-
-@motorista_bp.route('/api/motorista/<int:u_motorista>/dashboard', methods=['GET'])
-def dashboard_motorista(u_motorista):
-    try:
-        from models.entrega_model import EntregaModel
-        
-        # Estatísticas do motorista
+        from models.entrega import EntregaModel
         entregas = EntregaModel.listar_entregas_motorista(u_motorista)
-        
-        stats = {
-            'total_entregas': len(entregas),
-            'entregas_pendentes': len([e for e in entregas if e['status'] in ['PENDENTE', 'ATRASADA']]),
-            'entregas_andamento': len([e for e in entregas if e['status'] == 'EM_TRANSITO']),
-            'entregas_concluidas': len([e for e in entregas if e['status'] == 'ENTREGUE']),
-            'entregas_hoje': len([e for e in entregas if e.get('dataprevista') == datetime.now().date()])
-        }
-        
-        # Próximas entregas
-        proximas_entregas = [e for e in entregas if e['status'] in ['PENDENTE', 'EM_TRANSITO']][:5]
         
         return jsonify({
             'success': True,
-            'stats': stats,
-            'proximas_entregas': proximas_entregas
+            'entregas': entregas
         }), 200
-        
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Erro interno: {str(e)}'
+            'error': str(e)
+        }), 500
+
+@motorista_bp.route('/motoristas/<int:u_motorista>/status', methods=['PUT'])
+def atualizar_status_motorista(u_motorista):
+    """Atualiza status do motorista"""
+    try:
+        data = request.get_json()
+        novo_status = data.get('status')
+        
+        success, message = MotoristaModel.atualizar_status(u_motorista, novo_status)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': message
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
