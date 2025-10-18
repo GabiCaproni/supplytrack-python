@@ -1,5 +1,5 @@
-from models.usuario_model import UsuarioModel
-from models.motorista_model import MotoristaModel
+from models.usuario import UsuarioModel
+from models.motorista import MotoristaModel
 
 class UsuarioController:
     @staticmethod

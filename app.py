@@ -3,11 +3,14 @@ from flask_cors import CORS
 import os
 
 # Importar todas as rotas
-from routes.usuario_routes import usuario_bp
-from routes.motorista_routes import motorista_bp
-from routes.veiculo_routes import veiculo_bp
-from routes.logistica_routes import logistica_bp
-from routes.dashboard_routes import dashboard_bp
+from routes.usuario import usuario_bp
+from routes.veiculo import veiculo_bp
+from routes.motorista import motorista_bp
+from routes.entrega import entrega_bp
+from routes.carga import carga_bp
+from routes.rota import rota_bp
+from routes.logistica import logistica_bp
+from routes.dashboard import dashboard_bp
 
 def create_app():
     app = Flask(__name__)
@@ -19,21 +22,14 @@ def create_app():
     
     # ========== REGISTRAR TODAS AS ROTAS ==========
     
-    # Usuários
     app.register_blueprint(usuario_bp, url_prefix='/api')
-    
-    # Motoristas
-    app.register_blueprint(motorista_bp, url_prefix='/api')
-    
-    # Veículos
     app.register_blueprint(veiculo_bp, url_prefix='/api')
-    
-    # Logística (cargas, rotas, entregas)
+    app.register_blueprint(motorista_bp, url_prefix='/api')
+    app.register_blueprint(entrega_bp, url_prefix='/api')
+    app.register_blueprint(carga_bp, url_prefix='/api')
+    app.register_blueprint(rota_bp, url_prefix='/api')
     app.register_blueprint(logistica_bp, url_prefix='/api')
-    
-    # Dashboard
     app.register_blueprint(dashboard_bp, url_prefix='/api')
-    
     # ========== ROTAS BÁSICAS ==========
     
     @app.route('/')
@@ -47,16 +43,25 @@ def create_app():
                 'veiculos': '/api/veiculos',
                 'entregas': '/api/entregas',
                 'dashboard': '/api/dashboard',
-                'interface_web': '/dashboard'
+                'interface_web': '/dashboard',
+                'api_tester': '/api-tester'
             }
         })
+        
     
     @app.route('/health')
     def health_check():
         return jsonify({'status': 'healthy', 'service': 'supplytrack-api'})
     
     # ========== SERVER FRONTEND DO DASHBOARD ==========
-    
+    @app.route('/api-tester')
+    def api_tester():
+        """Serve a página de teste de APIs"""
+        try:
+            return send_from_directory('frontend', 'api-tester.html')
+        except FileNotFoundError:
+            return jsonify({'error': 'API Tester não encontrado'}), 404
+
     @app.route('/dashboard')
     def serve_dashboard():
         """Serve a interface web do dashboard"""

@@ -1,8 +1,8 @@
-from models.carga_model import CargaModel
-from models.rota_model import RotaModel
-from models.entrega_model import EntregaModel
-from models.veiculo_model import VeiculoModel
-from models.motorista_model import MotoristaModel
+from models.carga import CargaModel
+from models.rota import RotaModel
+from models.entrega import EntregaModel
+from models.veiculo import VeiculoModel
+from models.motorista import MotoristaModel
 
 class LogisticaController:
     @staticmethod

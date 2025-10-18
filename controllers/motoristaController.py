@@ -1,5 +1,5 @@
-from models.entrega_model import EntregaModel
-from models.motorista_model import MotoristaModel
+from models.entrega import EntregaModel
+from models.motorista import MotoristaModel
 
 class MotoristaController:
     @staticmethod

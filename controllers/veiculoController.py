@@ -1,5 +1,5 @@
-from models.veiculo_model import VeiculoModel
-from models.motorista_model import MotoristaModel
+from models.veiculo import VeiculoModel
+from models.motorista import MotoristaModel
 
 class VeiculoController:
     @staticmethod
@@ -39,6 +39,7 @@ class VeiculoController:
                 }
             else:
                 return False, mensagem
+            
                 
         except Exception as e:
             return False, f"Erro no cadastro: {str(e)}"
