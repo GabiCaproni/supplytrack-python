@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚚 SupplyTrack - Sistema de Gestão Logística</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .card h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .api-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+        
+        .api-section h2 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+        
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .endpoint-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .method-get { background: #d4edda; color: #155724; }
+        .method-post { background: #d1ecf1; color: #0c5460; }
+        .method-put { background: #fff3cd; color: #856404; }
+        .method-delete { background: #f8d7da; color: #721c24; }
+        
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .endpoint-desc {
+            margin-top: 10px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .feature-list {
+            list-style: none;
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #2ecc71;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .endpoint-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER PRINCIPAL -->
+        <div class="header">
+            <h1>🚚 SupplyTrack</h1>
+            <p>Sistema completo de gestão logística e supply chain em tempo real</p>
+            <div class="status-badge">Online ✅</div>
+        </div>
+
+        <!-- CARDS DE ACESSO RÁPIDO -->
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <h3>Dashboard</h3>
+                <p>Acesse o painel de controle com métricas em tempo real, gráficos interativos e visão completa das operações logísticas.</p>
+                <a href="/dashboard" class="btn btn-success">Acessar Dashboard</a>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">🧪</div>
+                <h3>API Tester</h3>
+                <p>Interface interativa para testar todos os endpoints da API. Crie usuários, veículos, motoristas e simule entregas.</p>
+                <a href="/api-tester" class="btn btn-secondary">Testar APIs</a>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon">🔧</div>
+                <h3>Documentação</h3>
+                <p>Documentação completa da API com exemplos de uso, códigos de exemplo e especificação de todos os endpoints.</p>
+                <a href="https://github.com/GabiCaproni/supplytrack-python" class="btn btn-warning" target="_blank">Ver no GitHub</a>
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE ENDPOINTS DA API -->
+        <div class="api-section">
+            <h2>🔌 Endpoints da API</h2>
+            <div class="endpoint-grid">
+                
+                <!-- 👥 USUÁRIOS -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/usuarios</span>
+                    </div>
+                    <div class="endpoint-desc">Listar todos os usuários</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-path">/api/usuarios</span>
+                    </div>
+                    <div class="endpoint-desc">Criar novo usuário</div>
+                </div>
+
+                <!-- 🚗 VEÍCULOS -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/veiculos</span>
+                    </div>
+                    <div class="endpoint-desc">Listar todos os veículos</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-path">/api/veiculos</span>
+                    </div>
+                    <div class="endpoint-desc">Cadastrar novo veículo</div>
+                </div>
+
+                <!-- 👨‍💼 MOTORISTAS -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/motoristas</span>
+                    </div>
+                    <div class="endpoint-desc">Listar todos os motoristas</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-path">/api/motoristas</span>
+                    </div>
+                    <div class="endpoint-desc">Cadastrar novo motorista</div>
+                </div>
+
+                <!-- 📦 CARGAS -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/cargas</span>
+                    </div>
+                    <div class="endpoint-desc">Listar todas as cargas</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-path">/api/logistica/registrar-carga</span>
+                    </div>
+                    <div class="endpoint-desc">Processo completo (carga + rota)</div>
+                </div>
+
+                <!-- 📮 ENTREGAS -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/entregas</span>
+                    </div>
+                    <div class="endpoint-desc">Listar todas as entregas</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-put">PUT</span>
+                        <span class="endpoint-path">/api/entregas/{id}/status</span>
+                    </div>
+                    <div class="endpoint-desc">Atualizar status da entrega</div>
+                </div>
+
+                <!-- 📊 DASHBOARD -->
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/dashboard</span>
+                    </div>
+                    <div class="endpoint-desc">Dados completos do dashboard</div>
+                </div>
+                
+                <div class="endpoint-card">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-path">/api/dashboard/metricas-rapidas</span>
+                    </div>
+                    <div class="endpoint-desc">Métricas rápidas</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE FUNCIONALIDADES -->
+        <div class="api-section">
+            <h2>🚀 Funcionalidades do Sistema</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>👥 Gestão de Usuários</h3>
+                    <ul class="feature-list">
+                        <li>Cadastro com múltiplos perfis</li>
+                        <li>Autenticação segura</li>
+                        <li>Controle de acesso</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>🚗 Gestão de Frota</h3>
+                    <ul class="feature-list">
+                        <li>Controle completo de veículos</li>
+                        <li>Status em tempo real</li>
+                        <li>Capacidade e características</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>📦 Logística Inteligente</h3>
+                    <ul class="feature-list">
+                        <li>Rastreamento de cargas</li>
+                        <li>Planejamento de rotas</li>
+                        <li>Controle de entregas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- RODAPÉ -->
+        <div class="footer">
+            <p>🚀 <strong>SupplyTrack</strong> - Sistema de Gestão Logística</p>
+               <a href="https://github.com/GabiCaproni/supplytrack-python" style="color: white; text-decoration: underline;" target="_blank">GitHub</a>
+            </p>
+            <p style="margin-top: 10px; opacity: 0.8;">Projeto acadêmico - Sistema Integrado de Logística e Supply Chain</p>
+        </div>
+    </div>
+
+    <script>
+        // Script para verificar status da API
+        async function verificarStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    console.log('✅ API está online e funcionando');
+                }
+            } catch (error) {
+                console.log('⚠️ Não foi possível verificar o status da API');
+            }
+        }
+        
+        // Verificar status ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            verificarStatus();
+            
+            // Adicionar animação aos cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

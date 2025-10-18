@@ -30,24 +30,24 @@ def create_app():
     app.register_blueprint(rota_bp, url_prefix='/api')
     app.register_blueprint(logistica_bp, url_prefix='/api')
     app.register_blueprint(dashboard_bp, url_prefix='/api')
+    
     # ========== ROTAS BÁSICAS ==========
     
     @app.route('/')
     def home():
-        return jsonify({
-            'message': '🚚 SupplyTrack API - Sistema de Gestão Logística',
-            'version': '1.0.0',
-            'endpoints': {
-                'usuarios': '/api/usuarios',
-                'motoristas': '/api/motoristas', 
-                'veiculos': '/api/veiculos',
-                'entregas': '/api/entregas',
-                'dashboard': '/api/dashboard',
-                'interface_web': '/dashboard',
-                'api_tester': '/api-tester'
-            }
-        })
-        
+        """Página inicial do SupplyTrack"""
+        try:
+            return send_from_directory('frontend', 'index.html')
+        except FileNotFoundError:
+            return jsonify({
+                'message': '🚚 SupplyTrack API - Sistema de Gestão Logística',
+                'version': '1.0.0',
+                'endpoints': {
+                    'dashboard': '/dashboard',
+                    'api_tester': '/api-tester', 
+                    'documentation': 'https://github.com/GabiCaproni/supplytrack-python'
+                }
+            })
     
     @app.route('/health')
     def health_check():
