@@ -365,25 +365,7 @@ flask run
 - [x] Respostas padronizadas em JSON
 
 ## 👥 Desenvolvido por
-
-**Gabriela Caproni**  
+  
 📧 [GitHub](https://github.com/GabiCaproni)  
 🎓 Projeto acadêmico - Disciplina de Desenvolvimento de Software
 
-## 📄 Licença
-
-Este projeto é desenvolvido para fins acadêmicos e educacionais.
-
-## 🤝 Contribuição
-
-1. Faça um Fork do projeto
-2. Crie uma Branch para sua Feature: `git checkout -b feature/nova-feature`
-3. Commit suas mudanças: `git commit -m 'feat: adiciona nova feature'`
-4. Push para a Branch: `git push origin feature/nova-feature`
-5. Abra um Pull Request
-
----
-
-**🚀 Desenvolvido com dedicação para revolucionar a gestão logística!**
-
-*SupplyTrack - O futuro da logística inteligente* 📦✨
