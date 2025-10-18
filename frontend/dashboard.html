@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupplyTrack - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .dashboard { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .card h3 { color: #333; margin-bottom: 10px; }
+        .card .number { font-size: 2em; font-weight: bold; margin: 10px 0; }
+        .card.entregues { border-left: 4px solid #28a745; }
+        .card.atrasadas { border-left: 4px solid #dc3545; }
+        .card.transito { border-left: 4px solid #ffc107; }
+        .card.alertas { border-left: 4px solid #17a2b8; }
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .lista { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .lista h3 { margin-bottom: 15px; color: #333; }
+        .item { padding: 10px; border-bottom: 1px solid #eee; }
+        .item:last-child { border-bottom: none; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+        .status.entregue { background: #d4edda; color: #155724; }
+        .status.transito { background: #fff3cd; color: #856404; }
+        .status.atrasada { background: #f8d7da; color: #721c24; }
+        .alerta.critico { color: #dc3545; font-weight: bold; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>📊 SupplyTrack - Dashboard</h1>
+            <p>Visão geral das operações logísticas</p>
+        </div>
+
+        <div class="cards-grid" id="cards-container">
+            <div class="loading">Carregando métricas...</div>
+        </div>
+
+        <div class="grid-2col">
+            <div class="lista">
+                <h3>🚨 Alertas Recentes</h3>
+                <div id="alertas-lista" class="loading">Carregando alertas...</div>
+            </div>
+            
+            <div class="lista">
+                <h3>📦 Entregas de Hoje</h3>
+                <div id="entregas-hoje" class="loading">Carregando entregas...</div>
+            </div>
+        </div>
+
+        <div class="grid-2col">
+            <div class="lista">
+                <h3>🕒 Entregas Recentes</h3>
+                <div id="entregas-recentes" class="loading">Carregando entregas...</div>
+            </div>
+            
+            <div class="lista">
+                <h3>📈 Estatísticas por Status</h3>
+                <canvas id="status-chart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para carregar dados do dashboard
+        async function carregarDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                
+                if (data.success) {
+                    atualizarCards(data.data);
+                    atualizarAlertas(data.data.alertas);
+                    atualizarEntregas(data.data.entregas);
+                    atualizarGrafico(data.data.entregas.por_status);
+                } else {
+                    console.error('Erro ao carregar dashboard:', data.message);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // Atualizar cards de métricas
+        function atualizarCards(data) {
+            const stats = data.estatisticas_principais;
+            const metricas = data.metricas_operacionais;
+            
+            const cardsHTML = `
+                <div class="card entregues">
+                    <h3>✅ Entregues</h3>
+                    <div class="number">${stats.entregues}</div>
+                    <p>${stats.taxa_entrega}% do total</p>
+                </div>
+                <div class="card transito">
+                    <h3>🚚 Em Trânsito</h3>
+                    <div class="number">${stats.em_transito}</div>
+                    <p>Entregas em andamento</p>
+                </div>
+                <div class="card atrasadas">
+                    <h3>⏰ Atrasadas</h3>
+                    <div class="number">${stats.atrasadas}</div>
+                    <p>${stats.taxa_atraso}% do total</p>
+                </div>
+                <div class="card alertas">
+                    <h3>🚨 Alertas</h3>
+                    <div class="number">${data.alertas.ativos}</div>
+                    <p>${data.alertas.criticos} críticos</p>
+                </div>
+            `;
+            
+            document.getElementById('cards-container').innerHTML = cardsHTML;
+        }
+
+        // Atualizar lista de alertas
+        function atualizarAlertas(alertasData) {
+            const alertas = alertasData.lista;
+            
+            if (alertas.length === 0) {
+                document.getElementById('alertas-lista').innerHTML = '<div class="item">Nenhum alerta ativo</div>';
+                return;
+            }
+            
+            const alertasHTML = alertas.map(alerta => `
+                <div class="item ${alerta.tipo === 'ATRASO' ? 'alerta critico' : ''}">
+                    <strong>${alerta.titulo}</strong>
+                    <div style="font-size: 0.9em; color: #666;">
+                        ${alerta.descricao || ''} • ${new Date(alerta.criado_em).toLocaleTimeString()}
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('alertas-lista').innerHTML = alertasHTML;
+        }
+
+        // Atualizar lista de entregas
+        function atualizarEntregas(entregasData) {
+            // Entregas de hoje
+            const hojeHTML = entregasData.hoje.map(entrega => `
+                <div class="item">
+                    <strong>#${entrega.identrega} - ${entrega.destino}</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="status ${entrega.status.toLowerCase()}">${entrega.status}</span>
+                        <small>${entrega.placa} • ${entrega.motorista_nome}</small>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('entregas-hoje').innerHTML = hojeHTML || '<div class="item">Nenhuma entrega para hoje</div>';
+
+            // Entregas recentes
+            const recentesHTML = entregasData.recentes.map(entrega => `
+                <div class="item">
+                    <strong>#${entrega.identrega} - ${entrega.destino}</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="status ${entrega.status.toLowerCase()}">${entrega.status}</span>
+                        <small>${new Date(entrega.dataprevista).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('entregas-recentes').innerHTML = recentesHTML;
+        }
+
+        // Atualizar gráfico de status
+        function atualizarGrafico(dadosStatus) {
+            const ctx = document.getElementById('status-chart').getContext('2d');
+            
+            const labels = dadosStatus.map(item => item.status);
+            const data = dadosStatus.map(item => item.quantidade);
+            const colors = {
+                'ENTREGUE': '#28a745',
+                'EM_TRANSITO': '#ffc107', 
+                'PENDENTE': '#17a2b8',
+                'ATRASADA': '#dc3545',
+                'PROBLEMA': '#6f42c1'
+            };
+            
+            const backgroundColors = labels.map(label => colors[label] || '#6c757d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Atualizar dados a cada 30 segundos
+        carregarDashboard();
+        setInterval(carregarDashboard, 30000);
+    </script>
+</body>
+</html>
