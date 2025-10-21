@@ -1,161 +1,108 @@
 from database.connection import execute_query
-from datetime import datetime
 
 class EntregaModel:
-    
     @staticmethod
     def listar_entregas():
         """Lista todas as entregas"""
         try:
+            print("📦 MODEL - Listando todas as entregas")
+            
             sql = """
-            SELECT e.*, r.DataSaida, r.distancia, v.placa, u.nome as motorista_nome,
-                   c.volume, c.peso, a.nome as armazem_nome
+            SELECT 
+                e.id_entrega,
+                e.data_entrega,
+                e.status,
+                e.local_entrega,
+                e.observacoes,
+                r.idRota,
+                r.DataSaida,
+                r.dataEntrega,
+                r.distancia,
+                r.status as status_rota,
+                c.id_carga,
+                c.volume,
+                c.peso,
+                c.status as status_carga
             FROM entrega e
-            LEFT JOIN rota r ON e.idRota = r.idRota
-            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
-            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
-            LEFT JOIN veiculo v ON r.id_veiculo = v.id_veiculo
+            LEFT JOIN rota r ON e.id_rota = r.idRota
             LEFT JOIN carga c ON e.id_carga = c.id_carga
-            LEFT JOIN armazem a ON c.id_armazem = a.id_armazem
-            ORDER BY e.dataPrevista DESC
+            ORDER BY e.data_entrega DESC
             """
-            result = execute_query(sql, fetch_all=True)
-            return result if result else []
+            
+            entregas = execute_query(sql, fetch_all=True)
+            print(f"📊 Entregas recuperadas: {len(entregas) if entregas else 0}")
+            
+            return entregas or []
+            
         except Exception as e:
-            print(f"Erro ao listar entregas: {str(e)}")
+            print(f"❌ Erro ao listar entregas no model: {e}")
             return []
 
     @staticmethod
-    def buscar_entrega_por_motorista(identrega, id_motorista):
-        """Busca entrega verificando se pertence ao motorista"""
+    def listar_entregas_ativas():
+        """Lista apenas entregas ativas"""
         try:
+            print("📦 MODEL - Listando entregas ativas")
+            
             sql = """
-            SELECT e.*, r.DataSaida, r.distancia, v.placa, m.cnh, 
-                   c.volume, c.peso, c.id_carga, u.nome as motorista_nome
+            SELECT 
+                e.id_entrega,
+                e.data_entrega,
+                e.status,
+                e.local_entrega,
+                e.observacoes,
+                r.idRota,
+                r.DataSaida,
+                r.dataEntrega,
+                r.distancia,
+                r.status as status_rota,
+                c.id_carga,
+                c.volume,
+                c.peso,
+                c.status as status_carga
             FROM entrega e
-            LEFT JOIN rota r ON e.idRota = r.idRota
-            LEFT JOIN veiculo v ON r.id_veiculo = v.id_veiculo
-            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
+            LEFT JOIN rota r ON e.id_rota = r.idRota
             LEFT JOIN carga c ON e.id_carga = c.id_carga
-            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
-            WHERE e.idEntrega = %s AND e.id_motorista = %s
-            """
-            result = execute_query(sql, (identrega, id_motorista), fetch_one=True)
-            return result if result else None
-        except Exception as e:
-            print(f"Erro ao buscar entrega do motorista: {e}")
-            return None
-
-    @staticmethod
-    def atualizar_status_motorista(identrega, id_motorista, novo_status, observacoes=None):
-        """
-        Atualiza status da entrega com verificações de segurança
-        """
-        try:
-            # Validar status
-            status_validos = ['PENDENTE', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADA', 'ATRASADA', 'PROBLEMA']
-            if novo_status not in status_validos:
-                return False, f"Status inválido. Use: {', '.join(status_validos)}"
-            
-            # Verificar se entrega pertence ao motorista
-            entrega = EntregaModel.buscar_entrega_por_motorista(identrega, id_motorista)
-            if not entrega:
-                return False, "Entrega não encontrada ou não pertence a este motorista"
-            
-            # Lógica de transição de status
-            status_atual = entrega['status']
-            transicoes_validas = {
-                'PENDENTE': ['EM_TRANSITO', 'CANCELADA'],
-                'EM_TRANSITO': ['ENTREGUE', 'ATRASADA', 'PROBLEMA'],
-                'ATRASADA': ['ENTREGUE', 'PROBLEMA'],
-                'PROBLEMA': ['EM_TRANSITO', 'ENTREGUE'],
-                'ENTREGUE': [],  # Estado final
-                'CANCELADA': []  # Estado final
-            }
-            
-            if novo_status not in transicoes_validas.get(status_atual, []):
-                return False, f"Transição de {status_atual} para {novo_status} não é permitida"
-            
-            # Atualizar entrega
-            if observacoes:
-                sql = "UPDATE entrega SET status = %s, observacoes = %s, dataRealizada = %s WHERE idEntrega = %s"
-                params = (novo_status, observacoes, 
-                         datetime.now().date() if novo_status == 'ENTREGUE' else None, 
-                         identrega)
-            else:
-                sql = "UPDATE entrega SET status = %s, dataRealizada = %s WHERE idEntrega = %s"
-                params = (novo_status, 
-                         datetime.now().date() if novo_status == 'ENTREGUE' else None, 
-                         identrega)
-            
-            result = execute_query(sql, params)
-            
-            if result is not None:
-                # Atualizar status da carga relacionada
-                if novo_status == 'ENTREGUE' and entrega.get('id_carga'):
-                    from models.carga import CargaModel
-                    CargaModel.atualizar_status(entrega['id_carga'], 'ENTREGUE')
-                elif novo_status == 'EM_TRANSITO' and entrega.get('id_carga'):
-                    from models.carga import CargaModel
-                    CargaModel.atualizar_status(entrega['id_carga'], 'EM_TRANSITO')
-                
-                return True, "Status atualizado com sucesso"
-            else:
-                return False, "Erro ao atualizar status"
-                
-        except Exception as e:
-            print(f"Erro ao atualizar status da entrega: {e}")
-            return False, f"Erro interno: {str(e)}"
-
-    @staticmethod
-    def listar_entregas_motorista(id_motorista, filtro_status=None):
-        """Lista entregas de um motorista específico"""
-        try:
-            sql = """
-            SELECT e.*, r.DataSaida, r.distancia, v.placa, 
-                   c.volume, c.peso, c.localizacaoAtual,
-                   CASE 
-                     WHEN e.dataPrevista < CURDATE() AND e.status = 'PENDENTE' THEN 'ATRASADA'
-                     ELSE e.status
-                   END as status_calculado
-            FROM entrega e
-            LEFT JOIN rota r ON e.idRota = r.idRota
-            LEFT JOIN veiculo v ON r.id_veiculo = v.id_veiculo
-            LEFT JOIN carga c ON e.id_carga = c.id_carga
-            WHERE e.id_motorista = %s
+            WHERE e.status IN ('PENDENTE', 'EM_ANDAMENTO', 'AGENDADA')
+            ORDER BY e.data_entrega ASC
             """
             
-            params = [id_motorista]
+            entregas = execute_query(sql, fetch_all=True)
+            print(f"📊 Entregas ativas recuperadas: {len(entregas) if entregas else 0}")
             
-            if filtro_status:
-                if filtro_status == 'ATRASADA':
-                    sql += " AND e.dataPrevista < CURDATE() AND e.status = 'PENDENTE'"
-                else:
-                    sql += " AND e.status = %s"
-                    params.append(filtro_status)
+            return entregas or []
             
-            sql += " ORDER BY e.dataPrevista ASC"
-            
-            entregas = execute_query(sql, tuple(params), fetch_all=True)
-            return entregas if entregas else []
         except Exception as e:
-            print(f"Erro ao listar entregas do motorista: {e}")
+            print(f"❌ Erro ao listar entregas ativas no model: {e}")
             return []
 
     @staticmethod
-    def criar_entrega(idRota, dataPrevista, id_motorista, id_carga=None):
+    def criar_entrega(data_entrega, status, local_entrega, id_rota=None, id_carga=None, observacoes=None):
         """Cria uma nova entrega"""
         try:
-            sql = """
-            INSERT INTO entrega (idRota, dataPrevista, status, id_motorista, id_carga) 
-            VALUES (%s, %s, 'PENDENTE', %s, %s)
-            """
-            result = execute_query(sql, (idRota, dataPrevista, id_motorista, id_carga))
+            print(f"🎯 MODEL - Criando entrega:")
+            print(f"   data_entrega: {data_entrega}")
+            print(f"   status: {status}")
+            print(f"   local_entrega: {local_entrega}")
+            print(f"   id_rota: {id_rota}")
+            print(f"   id_carga: {id_carga}")
             
-            if result:
-                return result, "Entrega criada com sucesso"
+            sql = """
+            INSERT INTO entrega (data_entrega, status, local_entrega, id_rota, id_carga, observacoes) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            params = (data_entrega, status, local_entrega, id_rota, id_carga, observacoes)
+            
+            print(f"🔍 SQL: {sql}")
+            print(f"🔍 Params: {params}")
+            
+            entrega_id = execute_query(sql, params)
+            
+            if entrega_id:
+                return entrega_id, "✅ Entrega cadastrada com sucesso"
             else:
-                return None, "Erro ao criar entrega"
+                return None, "❌ Erro ao cadastrar entrega"
                 
         except Exception as e:
-            return None, f"Erro ao criar entrega: {str(e)}"
+            print(f"❌ Erro no model de entrega: {str(e)}")
+            return None, f"❌ Erro interno: {str(e)}"

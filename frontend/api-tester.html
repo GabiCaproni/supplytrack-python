@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -36,7 +36,7 @@
         }
         .api-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 20px;
             padding: 30px;
         }
@@ -46,6 +46,9 @@
             padding: 20px;
             border-left: 5px solid #3498db;
             transition: transform 0.3s ease;
+        }
+        .api-card.rotas-card {
+            border-left-color: #e74c3c;
         }
         .api-card:hover {
             transform: translateY(-5px);
@@ -86,11 +89,11 @@
         .btn-success:hover {
             background: #219a52;
         }
-        .btn-danger {
-            background: #e74c3c;
+        .btn-warning {
+            background: #f39c12;
         }
-        .btn-danger:hover {
-            background: #c0392b;
+        .btn-warning:hover {
+            background: #e67e22;
         }
         .result {
             background: white;
@@ -126,6 +129,7 @@
             margin-bottom: 5px;
             font-weight: bold;
             color: #555;
+            font-size: 12px;
         }
         .form-group input, .form-group select {
             width: 100%;
@@ -133,6 +137,11 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
     </style>
 </head>
@@ -201,12 +210,6 @@
                 <div class="endpoint">GET /api/motoristas</div>
                 <button class="btn" onclick="testEndpoint('GET', '/api/motoristas')">Listar Motoristas</button>
                 
-                <div class="form-group">
-                    <label>CNH:</label>
-                    <input type="text" id="motorista-cnh" placeholder="12345678901">
-                </div>
-                <button class="btn btn-success" onclick="criarMotorista()">Criar Motorista</button>
-                
                 <div class="result" id="result-motoristas"></div>
             </div>
 
@@ -218,70 +221,82 @@
                 
                 <div class="form-group">
                     <label>Volume:</label>
-                    <input type="text" id="carga-volume" placeholder="2m³">
+                    <input type="text" id="carga-volume" placeholder="2m³" value="2m³">
                 </div>
                 <div class="form-group">
                     <label>Peso:</label>
-                    <input type="text" id="carga-peso" placeholder="500kg">
+                    <input type="text" id="carga-peso" placeholder="500kg" value="500kg">
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select id="rota-status">
+                        <option value="PENDENTE">PENDENTE</option>
+                        <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
+                        <option value="CONCLUIDA">CONCLUÍDA</option>
+                        <option value="CANCELADA">CANCELADA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Localização:</label>
+                    <input type="text" id="carga-localizacao" placeholder="Armazém Centro - Setor A">
+                </div>
+                <div class="form-group">
+                    <label>Armazém:</label>
+                    <select id="carga-armazem">
+                        <option value="1">Armazém Centro</option>
+                        <option value="2">Armazém Zona Norte</option>
+                        <option value="3">Armazém Zona Sul</option>
+                    </select>
                 </div>
                 <button class="btn btn-success" onclick="criarCarga()">Criar Carga</button>
                 
                 <div class="result" id="result-cargas"></div>
             </div>
 
-            <!-- 🛣️ ROTAS -->
-            <div class="api-card">
+            <!-- 🛣️ ROTAS (CORRIGIDO) -->
+            <div class="api-card rotas-card">
                 <h3>🛣️ Rotas</h3>
                 <div class="endpoint">GET /api/rotas</div>
                 <button class="btn" onclick="testEndpoint('GET', '/api/rotas')">Listar Rotas</button>
                 
-                <div class="form-group">
-                    <label>Origem:</label>
-                    <input type="text" id="rota-origem" placeholder="Armazém Centro">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data de Saída:</label>
+                        <input type="date" id="rota-dataSaida" value="">
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Entrega:</label>
+                        <input type="date" id="rota-dataEntrega" value="">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Destino:</label>
-                    <input type="text" id="rota-destino" placeholder="Cliente XYZ">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Distância (km):</label>
+                        <input type="number" id="rota-distancia" placeholder="150" value="150" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="rota-status">
+                            <option value="PLANEJADA">PLANEJADA</option>
+                            <option value="EM_TRANSITO">EM_TRANSITO</option>
+                            <option value="ENTREGUE">ENTREGUE</option>
+                            <option value="CANCELADA">CANCELADA</option>
+                            <option value="ATRASADA">ATRASADA</option>
+                        </select>
+                    </div>
                 </div>
+
+                
+
                 <button class="btn btn-success" onclick="criarRota()">Criar Rota</button>
+              
                 
                 <div class="result" id="result-rotas"></div>
             </div>
 
-            <!-- 📮 ENTREGAS -->
-            <div class="api-card">
-                <h3>📮 Entregas</h3>
-                <div class="endpoint">GET /api/entregas</div>
-                <button class="btn" onclick="testEndpoint('GET', '/api/entregas')">Listar Entregas</button>
-                <button class="btn" onclick="testEndpoint('GET', '/api/logistica/entregas-ativas')">Entregas Ativas</button>
-                
-                <div class="result" id="result-entregas"></div>
-            </div>
-
-            <!-- 📊 DASHBOARD -->
-            <div class="api-card">
-                <h3>📊 Dashboard</h3>
-                <div class="endpoint">GET /api/dashboard</div>
-                <button class="btn" onclick="testEndpoint('GET', '/api/dashboard')">Dados Completos</button>
-                
-                <div class="endpoint">GET /api/dashboard/alertas</div>
-                <button class="btn" onclick="testEndpoint('GET', '/api/dashboard/alertas')">Alertas</button>
-                
-                <div class="endpoint">GET /api/dashboard/metricas-rapidas</div>
-                <button class="btn" onclick="testEndpoint('GET', '/api/dashboard/metricas-rapidas')">Métricas</button>
-                
-                <div class="result" id="result-dashboard"></div>
-            </div>
-
-            <!-- 🔄 LOGÍSTICA -->
-            <div class="api-card">
-                <h3>🔄 Logística</h3>
-                <div class="endpoint">POST /api/logistica/registrar-carga</div>
-                <button class="btn btn-success" onclick="registrarCargaCompleta()">Registrar Carga + Rota</button>
-                
-                <div class="result" id="result-logistica"></div>
-            </div>
-
+            
+            
         </div>
     </div>
 
@@ -340,52 +355,49 @@
             await testEndpoint('POST', '/api/veiculos', data);
         }
 
-        // 👨‍💼 Criar Motorista
-        async function criarMotorista() {
-            const data = {
-                cnh: document.getElementById('motorista-cnh').value,
-                status: 'ATIVO'
-            };
-            await testEndpoint('POST', '/api/motoristas', data);
-        }
-
         // 📦 Criar Carga
         async function criarCarga() {
             const data = {
                 volume: document.getElementById('carga-volume').value,
                 peso: document.getElementById('carga-peso').value,
-                status: 'NO_ARMAZEM'
+                status: document.getElementById('carga-status').value,
+                localizacao: document.getElementById('carga-localizacao').value,
+                id_armazem: document.getElementById('carga-armazem').value
             };
             await testEndpoint('POST', '/api/cargas', data);
         }
 
-        // 🛣️ Criar Rota
-        async function criarRota() {
-            const data = {
-                origem: document.getElementById('rota-origem').value,
-                destino: document.getElementById('rota-destino').value,
-                status: 'PLANEJADA'
-            };
-            await testEndpoint('POST', '/api/rotas', data);
-        }
-
-        // 🔄 Registrar Carga Completa
-        async function registrarCargaCompleta() {
-            const data = {
-                volume: '2m³',
-                peso: '500kg',
-                dataprevista: '2024-12-20',
-                origem: 'Armazém Centro',
-                destino: 'Cliente ABC',
-                u_veiculo: 1,
-                u_motorista: 1
-            };
-            await testEndpoint('POST', '/api/logistica/registrar-carga', data);
-        }
-
-        // Testar automaticamente ao carregar a página
+    // 🛣️ Criar Rota (CORRIGIDO - status válidos)
+async function criarRota() {
+    try {
+        const data = {
+            dataSaida: document.getElementById('rota-dataSaida').value,
+            dataEntrega: document.getElementById('rota-dataEntrega').value,
+            distancia: document.getElementById('rota-distancia').value,
+            status: document.getElementById('rota-status').value
+        };
+        
+        console.log('🎯 Enviando dados da rota:', data);
+        
+        await testEndpoint('POST', '/api/rotas', data);
+        
+    } catch (error) {
+        console.error('❌ Erro ao criar rota:', error);
+        document.getElementById('result-rotas').innerHTML = `❌ Erro: ${error.message}`;
+    }
+}
+        // Preencher datas automaticamente ao carregar a página
         window.addEventListener('load', () => {
             testEndpoint('GET', '/api/dashboard/metricas-rapidas');
+            
+            // Data de saída: hoje
+            const hoje = new Date();
+            document.getElementById('rota-dataSaida').value = hoje.toISOString().split('T')[0];
+            
+            // Data de entrega: hoje + 3 dias
+            const entrega = new Date();
+            entrega.setDate(hoje.getDate() + 3);
+            document.getElementById('rota-dataEntrega').value = entrega.toISOString().split('T')[0];
         });
     </script>
 </body>

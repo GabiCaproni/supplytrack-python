@@ -1,92 +1,132 @@
 from flask import Blueprint, request, jsonify
-from models.motorista import MotoristaModel
+from controllers.motoristaController import MotoristaController
 
-motorista_bp = Blueprint('motoristas', __name__)
+motorista_bp = Blueprint('motorista', __name__)
 
 @motorista_bp.route('/motoristas', methods=['GET'])
 def listar_motoristas():
     """Lista todos os motoristas"""
-    try:
-        motoristas = MotoristaModel.listar_motoristas()
+    success, result = MotoristaController.listar_motoristas()
+    
+    if success:
         return jsonify({
             'success': True,
-            'motoristas': motoristas
+            'motoristas': result
         }), 200
-    except Exception as e:
+    else:
         return jsonify({
             'success': False,
-            'error': str(e)
-        }), 500
+            'error': result
+        }), 400
 
 @motorista_bp.route('/motoristas', methods=['POST'])
 def criar_motorista():
-    """Cadastra um novo motorista"""
+    """Cria um novo motorista (suporta duas formas)"""
     try:
         data = request.get_json()
         
-        motorista_id, mensagem = MotoristaModel.cadastrar(
-            data['cnh'],
-            data.get('status', 'ATIVO'),
-            data.get('u_rota')
-        )
-        
-        if motorista_id:
-            return jsonify({
-                'success': True,
-                'message': mensagem,
-                'motorista_id': motorista_id
-            }), 201
-        else:
+        if not data:
             return jsonify({
                 'success': False,
-                'message': mensagem
+                'error': 'Dados JSON são obrigatórios'
             }), 400
+        
+        # FORMA 1: Criar motorista a partir de usuário existente
+        id_usuario = data.get('id_usuario')
+        cnh = data.get('cnh')
+        status = data.get('status', 'LIVRE')
+        
+        if id_usuario and cnh:
+            success, result = MotoristaController.criar_motorista(id_usuario, cnh, status)
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': result['message'],
+                    'id_motorista': result['id_motorista']
+                }), 201
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result
+                }), 400
+        
+        # FORMA 2: Criar usuário e motorista juntos
+        nome = data.get('nome')
+        email = data.get('email')
+        senha = data.get('senha')
+        
+        if nome and email and senha and cnh:
+            success, result = MotoristaController.criar_motorista_completo(nome, email, senha, cnh, status)
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': result['message'],
+                    'id_usuario': result['id_usuario'],
+                    'id_motorista': result['id_motorista']
+                }), 201
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result
+                }), 400
+        
+        # Se nenhuma forma foi satisfeita
+        return jsonify({
+            'success': False,
+            'error': 'Dados insuficientes. Use: (id_usuario + cnh) OU (nome + email + senha + cnh)'
+        }), 400
             
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
         }), 500
 
-@motorista_bp.route('/motoristas/<int:u_motorista>/entregas', methods=['GET'])
-def listar_entregas_motorista(u_motorista):
-    """Lista entregas de um motorista específico"""
-    try:
-        from models.entrega import EntregaModel
-        entregas = EntregaModel.listar_entregas_motorista(u_motorista)
-        
-        return jsonify({
-            'success': True,
-            'entregas': entregas
-        }), 200
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@motorista_bp.route('/motoristas/<int:u_motorista>/status', methods=['PUT'])
-def atualizar_status_motorista(u_motorista):
-    """Atualiza status do motorista"""
+# ADICIONE ESTA ROTA NOVA AQUI:
+@motorista_bp.route('/motoristas/simples', methods=['POST'])
+def criar_motorista_simples():
+    """Cria um motorista com dados mínimos (apenas para teste)"""
     try:
         data = request.get_json()
-        novo_status = data.get('status')
         
-        success, message = MotoristaModel.atualizar_status(u_motorista, novo_status)
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Dados JSON são obrigatórios'
+            }), 400
+        
+        cnh = data.get('cnh')
+        
+        if not cnh:
+            return jsonify({
+                'success': False,
+                'error': 'CNH é obrigatória'
+            }), 400
+        
+        # Criar usuário automático para o motorista
+        nome = f"Motorista {cnh}"
+        email = f"motorista.{cnh}@supplytrack.com"
+        senha = "123456"  # Senha padrão
+        
+        success, result = MotoristaController.criar_motorista_completo(nome, email, senha, cnh)
         
         if success:
             return jsonify({
                 'success': True,
-                'message': message
-            }), 200
+                'message': result['message'],
+                'id_usuario': result['id_usuario'],
+                'id_motorista': result['id_motorista']
+            }), 201
         else:
             return jsonify({
                 'success': False,
-                'message': message
+                'error': result
             }), 400
             
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
         }), 500

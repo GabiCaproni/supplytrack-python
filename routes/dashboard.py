@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify
 from controllers.dashboardController import DashboardController
 
-dashboard_bp = Blueprint('dashboard', __name__)
+# Mude o nome do blueprint para evitar conflito
+dashboard_bp = Blueprint('dashboard_api', __name__)
 
-@dashboard_bp.route('/dashboard', methods=['GET'])
+# CORREÇÃO: Mude as rotas para /api/dashboard/data, /api/dashboard/alertas, etc.
+@dashboard_bp.route('/dashboard/data', methods=['GET'])
 def get_dashboard_completo():
     """Retorna todos os dados do dashboard"""
     try:

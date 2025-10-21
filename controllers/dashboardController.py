@@ -1,91 +1,82 @@
 from models.dashboard import DashboardModel
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class DashboardController:
     @staticmethod
     def get_dashboard_data():
-        """
-        Obtém todos os dados para o dashboard de forma otimizada
-        """
+        """Obtém todos os dados para o dashboard"""
         try:
-            # Buscar dados em paralelo (simulação - em produção poderia ser assíncrono)
+            # Estatísticas principais
             estatisticas = DashboardModel.get_estatisticas_entregas()
-            alertas_ativos = DashboardModel.get_alertas_ativos()
-            entregas_recentes = DashboardModel.get_entregas_recentes(5)
+            
+            # Calcular taxas
+            total_entregas = estatisticas['total_entregas']
+            taxa_entrega = round((estatisticas['entregues'] / total_entregas * 100), 2) if total_entregas > 0 else 0
+            taxa_atraso = round((estatisticas['atrasadas'] / total_entregas * 100), 2) if total_entregas > 0 else 0
+            
+            estatisticas_principais = {
+                **estatisticas,
+                'taxa_entrega': taxa_entrega,
+                'taxa_atraso': taxa_atraso
+            }
+            
+            # Métricas operacionais
             metricas_operacionais = DashboardModel.get_metricas_operacionais()
+            
+            # Alertas
+            alertas_lista = DashboardModel.get_alertas_ativos()
+            alertas_data = {
+                'ativos': len(alertas_lista),
+                'criticos': len([a for a in alertas_lista if a['tipo'] in ['ATRASO', 'PERIGO']]),
+                'lista': alertas_lista
+            }
+            
+            # Entregas
+            entregas_recentes = DashboardModel.get_entregas_recentes(10)
             entregas_hoje = DashboardModel.get_entregas_hoje()
             entregas_atrasadas = DashboardModel.get_entregas_atrasadas()
             entregas_por_status = DashboardModel.get_entregas_por_status()
             
-            # Calcular métricas derivadas
-            taxa_entrega = (estatisticas['entregues'] / estatisticas['total_entregas'] * 100) if estatisticas['total_entregas'] > 0 else 0
-            taxa_atraso = (estatisticas['atrasadas'] / estatisticas['total_entregas'] * 100) if estatisticas['total_entregas'] > 0 else 0
-            
-            dashboard_data = {
-                'estatisticas_principais': {
-                    'total_entregas': estatisticas['total_entregas'],
-                    'entregues': estatisticas['entregues'],
-                    'em_transito': estatisticas['em_transito'],
-                    'pendentes': estatisticas['pendentes'],
-                    'atrasadas': estatisticas['atrasadas'],
-                    'com_problema': estatisticas['com_problema'],
-                    'taxa_entrega': round(taxa_entrega, 1),
-                    'taxa_atraso': round(taxa_atraso, 1)
-                },
-                
-                'metricas_operacionais': metricas_operacionais,
-                
-                'alertas': {
-                    'ativos': len(alertas_ativos),
-                    'lista': alertas_ativos[:5],  # Últimos 5 alertas
-                    'criticos': len([a for a in alertas_ativos if a.get('tipo') in ['ATRASO', 'VEICULO_PROBLEMA']])
-                },
-                
-                'entregas': {
-                    'recentes': entregas_recentes,
-                    'hoje': entregas_hoje,
-                    'atrasadas': entregas_atrasadas,
-                    'por_status': entregas_por_status
-                },
-                
-                'resumo_dia': {
-                    'entregas_previstas_hoje': len(entregas_hoje),
-                    'entregas_concluidas_hoje': len([e for e in entregas_hoje if e.get('status') == 'ENTREGUE']),
-                    'alertas_hoje': len([a for a in alertas_ativos if str(a.get('criado_em', ''))[:10] == str(datetime.now().date())])
-                }
+            entregas_data = {
+                'recentes': entregas_recentes,
+                'hoje': entregas_hoje,
+                'atrasadas': entregas_atrasadas,
+                'por_status': entregas_por_status
             }
             
-            return True, dashboard_data
+            return True, {
+                'estatisticas_principais': estatisticas_principais,
+                'metricas_operacionais': metricas_operacionais,
+                'alertas': alertas_data,
+                'entregas': entregas_data,
+                'ultima_atualizacao': datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+            }
             
         except Exception as e:
-            print(f"Erro no controller do dashboard: {e}")
+            print(f"Erro no DashboardController: {e}")
             return False, f"Erro ao carregar dados do dashboard: {str(e)}"
 
     @staticmethod
     def get_alertas_resumido():
-        """Obtém apenas dados de alertas para atualização em tempo real"""
+        """Retorna dados resumidos de alertas"""
         try:
             alertas = DashboardModel.get_alertas_ativos()
-            
             return True, {
-                'total_alertas': len(alertas),
-                'alertas_recentes': alertas[:3],
-                'alertas_criticos': [a for a in alertas if a.get('tipo') in ['ATRASO', 'VEICULO_PROBLEMA']][:3]
+                'ativos': len(alertas),
+                'criticos': len([a for a in alertas if a['tipo'] in ['ATRASO', 'PERIGO']]),
+                'lista': alertas[:5]  # Apenas 5 mais recentes
             }
         except Exception as e:
-            return False, f"Erro ao carregar alertas: {str(e)}"
+            return False, str(e)
 
     @staticmethod
     def get_entregas_resumido():
-        """Obtém apenas dados de entregas para atualização em tempo real"""
+        """Retorna dados resumidos de entregas"""
         try:
-            estatisticas = DashboardModel.get_estatisticas_entregas()
-            entregas_hoje = DashboardModel.get_entregas_hoje()
-            
             return True, {
-                'estatisticas': estatisticas,
-                'entregas_hoje': len(entregas_hoje),
-                'entregas_pendentes_hoje': len([e for e in entregas_hoje if e.get('status') in ['PENDENTE', 'EM_TRANSITO']])
+                'recentes': DashboardModel.get_entregas_recentes(5),
+                'hoje': DashboardModel.get_entregas_hoje(),
+                'por_status': DashboardModel.get_entregas_por_status()
             }
         except Exception as e:
-            return False, f"Erro ao carregar entregas: {str(e)}"
+            return False, str(e)

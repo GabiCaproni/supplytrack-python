@@ -1,82 +1,35 @@
 from models.veiculo import VeiculoModel
-from models.motorista import MotoristaModel
 
 class VeiculoController:
     @staticmethod
-    def cadastrar_veiculo(dados):
-        """
-        Cadastra um novo veículo com validações
-        """
+    def criar_veiculo(placa, capacidade, id_motorista=None):
+        """Cria um novo veículo"""
         try:
-            placa = dados.get('placa')
-            capacidade = dados.get('capacidade')
-            u_motorista = dados.get('u_motorista')
-            status = dados.get('status', 'DISPONIVEL')
-            
-            # Validações
+            # Validações básicas
             if not placa or not capacidade:
                 return False, "Placa e capacidade são obrigatórios"
             
-            # Validar formato da placa (exemplo básico)
-            if len(placa) < 6:
-                return False, "Placa inválida"
-            
-            # Verificar se motorista existe (se fornecido)
-            if u_motorista:
-                motorista = MotoristaModel.buscar_por_id(u_motorista)
-                if not motorista:
-                    return False, "Motorista não encontrado"
-            
-            # Cadastrar veículo
-            veiculo_id, mensagem = VeiculoModel.cadastrar(
-                placa, capacidade, u_motorista, status
-            )
+            # Chamar o modelo para cadastrar
+            veiculo_id, mensagem = VeiculoModel.cadastrar(placa, capacidade, id_motorista)
             
             if veiculo_id:
                 return True, {
-                    'message': mensagem,
-                    'veiculo_id': veiculo_id
+                    'id_veiculo': veiculo_id,
+                    'message': mensagem
                 }
             else:
                 return False, mensagem
-            
                 
         except Exception as e:
-            return False, f"Erro no cadastro: {str(e)}"
+            print(f"Erro no VeiculoController: {e}")
+            return False, f"Erro interno: {str(e)}"
 
     @staticmethod
-    def listar_veiculos(filtro_status=None):
-        """
-        Lista veículos com filtro opcional por status
-        """
+    def listar_veiculos():
+        """Lista todos os veículos"""
         try:
             veiculos = VeiculoModel.listar_veiculos()
-            
-            if filtro_status:
-                veiculos = [v for v in veiculos if v['status'] == filtro_status]
-            
             return True, veiculos
         except Exception as e:
+            print(f"Erro ao listar veículos: {e}")
             return False, f"Erro ao listar veículos: {str(e)}"
-
-    @staticmethod
-    def atualizar_status_veiculo(u_veiculo, novo_status):
-        """
-        Atualiza status do veículo
-        """
-        try:
-            success, message = VeiculoModel.atualizar_status(u_veiculo, novo_status)
-            return success, message
-        except Exception as e:
-            return False, f"Erro ao atualizar status: {str(e)}"
-
-    @staticmethod
-    def get_veiculos_disponiveis():
-        """
-        Retorna veículos disponíveis para novas rotas
-        """
-        try:
-            veiculos = VeiculoModel.buscar_veiculos_disponiveis()
-            return True, veiculos
-        except Exception as e:
-            return False, f"Erro ao buscar veículos disponíveis: {str(e)}"

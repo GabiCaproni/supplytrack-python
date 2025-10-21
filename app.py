@@ -10,7 +10,7 @@ from routes.entrega import entrega_bp
 from routes.carga import carga_bp
 from routes.rota import rota_bp
 from routes.logistica import logistica_bp
-from routes.dashboard import dashboard_bp
+from routes.dashboard import dashboard_bp  # Agora importa o blueprint corrigido
 
 def create_app():
     app = Flask(__name__)
@@ -29,7 +29,7 @@ def create_app():
     app.register_blueprint(carga_bp, url_prefix='/api')
     app.register_blueprint(rota_bp, url_prefix='/api')
     app.register_blueprint(logistica_bp, url_prefix='/api')
-    app.register_blueprint(dashboard_bp, url_prefix='/api')
+    app.register_blueprint(dashboard_bp, url_prefix='/api')  # Agora registra o blueprint corrigido
     
     # ========== ROTAS BÁSICAS ==========
     
@@ -54,6 +54,7 @@ def create_app():
         return jsonify({'status': 'healthy', 'service': 'supplytrack-api'})
     
     # ========== SERVER FRONTEND DO DASHBOARD ==========
+    
     @app.route('/api-tester')
     def api_tester():
         """Serve a página de teste de APIs"""
@@ -69,6 +70,32 @@ def create_app():
             return send_from_directory('frontend', 'dashboard.html')
         except FileNotFoundError:
             return jsonify({'error': 'Dashboard não encontrado'}), 404
+    
+    # ========== ROTA PARA DADOS DO DASHBOARD ==========
+    
+    @app.route('/api/dashboard')
+    def api_dashboard():
+        """Rota alternativa para o dashboard (para compatibilidade)"""
+        try:
+            from controllers.dashboardController import dashboardController
+            success, result = dashboardController.get_dashboard_data()
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'data': result
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': result
+                }), 500
+                
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
     
     @app.route('/<path:filename>')
     def serve_static(filename):

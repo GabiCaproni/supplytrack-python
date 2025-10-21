@@ -2,75 +2,46 @@ from database.connection import execute_query
 
 class CargaModel:
     @staticmethod
-    def cadastrar(volume, peso, id_armazem):
+    def cadastrar(volume, peso, status, localizacaoAtual, id_armazem):
         """Cadastra uma nova carga"""
         try:
+            print(f"Model - Cadastrando carga: {volume}, {peso}, {status}, {localizacaoAtual}, {id_armazem}")  # Debug
+            
             sql = """
             INSERT INTO carga (volume, peso, status, localizacaoAtual, id_armazem) 
-            VALUES (%s, %s, 'CADASTRADA', (SELECT nome FROM armazem WHERE id_armazem = %s), %s)
+            VALUES (%s, %s, %s, %s, %s)
             """
-            params = (volume, peso, id_armazem, id_armazem)
+            params = (volume, peso, status, localizacaoAtual, id_armazem)
+            
+            print(f"Executando SQL: {sql}")
+            print(f"Com parâmetros: {params}")
             
             carga_id = execute_query(sql, params)
             
-            # Correção no retorno - removendo a tupla duplicada
             if carga_id:
-                return carga_id, "Carga cadastrada com sucesso"
+                return carga_id, "✅ Carga cadastrada com sucesso"
             else:
-                return None, "Erro ao cadastrar carga"
+                return None, "❌ Erro ao cadastrar carga"
                 
         except Exception as e:
-            return None, f"Erro: {str(e)}"
+            print(f"✗ Erro ao cadastrar carga: {e}")
+            return None, f"❌ Erro interno: {str(e)}"
 
     @staticmethod
     def listar_cargas():
         """Lista todas as cargas"""
         try:
             sql = """
-            SELECT c.*, a.nome as armazem_nome 
-            FROM carga c 
-            LEFT JOIN armazem a ON c.id_armazem = a.id_armazem
-            ORDER BY c.id_carga DESC
+            SELECT 
+                id_carga,
+                volume,
+                peso,
+                status,
+                localizacaoAtual,
+                id_armazem
+            FROM carga 
             """
-            result = execute_query(sql, fetch_all=True)
-            return result if result else []
+            return execute_query(sql, fetch_all=True) or []
         except Exception as e:
-            print(f"Erro ao listar cargas: {str(e)}")
+            print(f"✗ Erro ao listar cargas: {e}")
             return []
-
-    @staticmethod
-    def atualizar_status(id_carga, status):
-        """Atualiza o status de uma carga"""
-        try:
-            sql = "UPDATE carga SET status = %s WHERE id_carga = %s"
-            result = execute_query(sql, (status, id_carga))
-            return result is not None
-        except Exception as e:
-            print(f"Erro ao atualizar status da carga: {str(e)}")
-            return False
-
-    @staticmethod
-    def buscar_por_id(id_carga):
-        """Busca uma carga pelo ID"""
-        try:
-            sql = """
-            SELECT c.*, a.nome as armazem_nome 
-            FROM carga c 
-            LEFT JOIN armazem a ON c.id_armazem = a.id_armazem
-            WHERE c.id_carga = %s
-            """
-            return execute_query(sql, (id_carga,), fetch_one=True)
-        except Exception as e:
-            print(f"Erro ao buscar carga: {str(e)}")
-            return None
-
-    @staticmethod
-    def atualizar_localizacao(id_carga, nova_localizacao):
-        """Atualiza a localização atual da carga"""
-        try:
-            sql = "UPDATE carga SET localizacaoAtual = %s WHERE id_carga = %s"
-            result = execute_query(sql, (nova_localizacao, id_carga))
-            return result is not None
-        except Exception as e:
-            print(f"Erro ao atualizar localização da carga: {str(e)}")
-            return False

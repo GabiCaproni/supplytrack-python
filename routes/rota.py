@@ -1,85 +1,84 @@
 from flask import Blueprint, request, jsonify
-from models.rota import RotaModel
+from controllers.rotaController import RotaController
 
-rota_bp = Blueprint('rotas', __name__)
+rota_bp = Blueprint('rota', __name__)
 
 @rota_bp.route('/rotas', methods=['GET'])
 def listar_rotas():
     """Lista todas as rotas"""
     try:
-        filtro_status = request.args.get('status')
-        rotas = RotaModel.listar_rotas(filtro_status)
+        print("📨 GET /api/rotas - Listando rotas")
         
-        return jsonify({
-            'success': True,
-            'rotas': rotas
-        }), 200
+        success, result = RotaController.listar_rotas()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'rotas': result
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': result
+            }), 400
+            
     except Exception as e:
+        print(f"❌ Erro na rota GET /rotas: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
         }), 500
 
 @rota_bp.route('/rotas', methods=['POST'])
 def criar_rota():
     """Cria uma nova rota"""
     try:
-        data = request.get_json()
+        print("📨 POST /api/rotas - Criando rota")
         
-        rota_id, mensagem = RotaModel.criar_rota(
-            data['origem'],
-            data['destino'],
-            data.get('distancia_km'),
-            data.get('tempo_estimado'),
-            data.get('status', 'PLANEJADA')
-        )
-        
-        if rota_id:
-            return jsonify({
-                'success': True,
-                'message': mensagem,
-                'rota_id': rota_id
-            }), 201
+        # Pegar dados do request
+        if request.is_json:
+            data = request.get_json()
         else:
+            data = request.form.to_dict()
+        
+        print(f"📦 Dados recebidos: {data}")
+        
+        # Extrair dados
+        dataSaida = data.get('dataSaida')
+        dataEntrega = data.get('dataEntrega')
+        distancia = data.get('distancia')
+        status = data.get('status', 'PENDENTE')
+        
+        # Validar campos obrigatórios
+        if not all([dataSaida, dataEntrega, distancia, status]):
             return jsonify({
                 'success': False,
-                'message': mensagem
-            }), 400
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@rota_bp.route('/rotas/<int:u_rota>/status', methods=['PUT'])
-def atualizar_status_rota(u_rota):
-    """Atualiza status da rota"""
-    try:
-        data = request.get_json()
-        novo_status = data.get('status')
-        
-        if not novo_status:
-            return jsonify({
-                'success': False,
-                'message': 'Status é obrigatório'
+                'error': 'Campos obrigatórios faltando: dataSaida, dataEntrega, distancia, status'
             }), 400
         
-        success, message = RotaModel.atualizar_status_rota(u_rota, novo_status)
+        # Chamar controller
+        success, result = RotaController.criar_rota(
+            dataSaida=dataSaida,
+            dataEntrega=dataEntrega,
+            distancia=distancia,
+            status=status
+        )
         
         if success:
             return jsonify({
                 'success': True,
-                'message': message
-            }), 200
+                'message': result.get('message'),
+                'id_rota': result.get('id_rota')
+            }), 201
         else:
             return jsonify({
                 'success': False,
-                'message': message
+                'error': result
             }), 400
             
     except Exception as e:
+        print(f"❌ Erro no routes POST: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
         }), 500

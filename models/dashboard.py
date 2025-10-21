@@ -6,7 +6,6 @@ class DashboardModel:
     def get_estatisticas_entregas():
         """Obtém estatísticas principais de entregas"""
         try:
-            # Estatísticas básicas
             sql_estatisticas = """
             SELECT 
                 COUNT(*) as total_entregas,
@@ -17,16 +16,29 @@ class DashboardModel:
                 SUM(CASE WHEN status = 'PROBLEMA' THEN 1 ELSE 0 END) as com_problema
             FROM entrega
             """
-            stats = execute_query(sql_estatisticas, fetch=True)
+            result = execute_query(sql_estatisticas, fetch=True)
             
-            return stats[0] if stats else {
+            if result:
+                return {
+                    'total_entregas': result['total_entregas'] or 0,
+                    'entregues': result['entregues'] or 0,
+                    'em_transito': result['em_transito'] or 0,
+                    'pendentes': result['pendentes'] or 0,
+                    'atrasadas': result['atrasadas'] or 0,
+                    'com_problema': result['com_problema'] or 0
+                }
+            else:
+                return {
+                    'total_entregas': 0, 'entregues': 0, 'em_transito': 0, 
+                    'pendentes': 0, 'atrasadas': 0, 'com_problema': 0
+                }
+                
+        except Exception as e:
+            print(f"Erro ao buscar estatísticas: {e}")
+            return {
                 'total_entregas': 0, 'entregues': 0, 'em_transito': 0, 
                 'pendentes': 0, 'atrasadas': 0, 'com_problema': 0
             }
-            
-        except Exception as e:
-            print(f"Erro ao buscar estatísticas: {e}")
-            return {'total_entregas': 0, 'entregues': 0, 'em_transito': 0, 'pendentes': 0, 'atrasadas': 0, 'com_problema': 0}
 
     @staticmethod
     def get_entregas_recentes(limite=10):
@@ -47,15 +59,16 @@ class DashboardModel:
                 c.volume,
                 c.peso
             FROM entrega e
-            LEFT JOIN rota r ON e.u_rota = r.u_rota
-            LEFT JOIN veiculo v ON e.u_veiculo = v.u_veiculo
-            LEFT JOIN motorista m ON e.u_motorista = m.u_motorista
-            LEFT JOIN usuario u ON m.u_motorista = u.u_motorista
-            LEFT JOIN carga c ON e.idcarga = c.idcarga
+            LEFT JOIN rota r ON e.id_rota = r.id_rota
+            LEFT JOIN veiculo v ON e.id_veiculo = v.id_veiculo
+            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
+            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
+            LEFT JOIN carga c ON e.id_carga = c.id_carga
             ORDER BY e.dataprevista DESC
             LIMIT %s
             """
-            return execute_query(sql, (limite,), fetch=True) or []
+            result = execute_query(sql, (limite,), fetch_all=True)
+            return result or []
             
         except Exception as e:
             print(f"Erro ao buscar entregas recentes: {e}")
@@ -67,7 +80,7 @@ class DashboardModel:
         try:
             sql = """
             SELECT 
-                a.idalerta,
+                a.id_alerta,
                 a.tipo,
                 a.titulo,
                 a.descricao,
@@ -79,16 +92,17 @@ class DashboardModel:
                 u.nome as motorista_nome,
                 e.identrega
             FROM alerta a
-            LEFT JOIN rota r ON a.u_rota = r.u_rota
-            LEFT JOIN veiculo v ON a.u_veiculo = v.u_veiculo
-            LEFT JOIN motorista m ON a.u_motorista = m.u_motorista
-            LEFT JOIN usuario u ON m.u_motorista = u.u_motorista
-            LEFT JOIN entrega e ON a.identrega = e.identrega
+            LEFT JOIN rota r ON a.id_rota = r.id_rota
+            LEFT JOIN veiculo v ON a.id_veiculo = v.id_veiculo
+            LEFT JOIN motorista m ON a.id_motorista = m.id_motorista
+            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
+            LEFT JOIN entrega e ON a.id_entrega = e.identrega
             WHERE a.status = 'ATIVO'
             ORDER BY a.criado_em DESC
             LIMIT 20
             """
-            return execute_query(sql, fetch=True) or []
+            result = execute_query(sql, fetch_all=True)
+            return result or []
             
         except Exception as e:
             print(f"Erro ao buscar alertas ativos: {e}")
@@ -106,7 +120,8 @@ class DashboardModel:
             GROUP BY status
             ORDER BY quantidade DESC
             """
-            return execute_query(sql, fetch=True) or []
+            result = execute_query(sql, fetch_all=True)
+            return result or []
             
         except Exception as e:
             print(f"Erro ao buscar entregas por status: {e}")
@@ -125,14 +140,15 @@ class DashboardModel:
                 u.nome as motorista_nome,
                 TIMEDIFF(e.dataprevista, NOW()) as tempo_restante
             FROM entrega e
-            LEFT JOIN rota r ON e.u_rota = r.u_rota
-            LEFT JOIN veiculo v ON e.u_veiculo = v.u_veiculo
-            LEFT JOIN motorista m ON e.u_motorista = m.u_motorista
-            LEFT JOIN usuario u ON m.u_motorista = u.u_motorista
+            LEFT JOIN rota r ON e.id_rota = r.id_rota
+            LEFT JOIN veiculo v ON e.id_veiculo = v.id_veiculo
+            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
+            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
             WHERE DATE(e.dataprevista) = CURDATE()
             ORDER BY e.dataprevista ASC
             """
-            return execute_query(sql, fetch=True) or []
+            result = execute_query(sql, fetch_all=True)
+            return result or []
             
         except Exception as e:
             print(f"Erro ao buscar entregas de hoje: {e}")
@@ -153,11 +169,23 @@ class DashboardModel:
                 (SELECT COUNT(*) FROM carga WHERE status = 'EM_TRANSITO') as cargas_em_transito
             """
             result = execute_query(sql, fetch=True)
-            return result[0] if result else {
-                'total_usuarios': 0, 'total_veiculos': 0, 'veiculos_disponiveis': 0,
-                'total_motoristas': 0, 'motoristas_ativos': 0, 'total_cargas': 0, 'cargas_em_transito': 0
-            }
             
+            if result:
+                return {
+                    'total_usuarios': result['total_usuarios'] or 0,
+                    'total_veiculos': result['total_veiculos'] or 0,
+                    'veiculos_disponiveis': result['veiculos_disponiveis'] or 0,
+                    'total_motoristas': result['total_motoristas'] or 0,
+                    'motoristas_ativos': result['motoristas_ativos'] or 0,
+                    'total_cargas': result['total_cargas'] or 0,
+                    'cargas_em_transito': result['cargas_em_transito'] or 0
+                }
+            else:
+                return {
+                    'total_usuarios': 0, 'total_veiculos': 0, 'veiculos_disponiveis': 0,
+                    'total_motoristas': 0, 'motoristas_ativos': 0, 'total_cargas': 0, 'cargas_em_transito': 0
+                }
+                
         except Exception as e:
             print(f"Erro ao buscar métricas operacionais: {e}")
             return {
@@ -178,16 +206,17 @@ class DashboardModel:
                 u.nome as motorista_nome,
                 DATEDIFF(CURDATE(), e.dataprevista) as dias_atraso
             FROM entrega e
-            LEFT JOIN rota r ON e.u_rota = r.u_rota
-            LEFT JOIN veiculo v ON e.u_veiculo = v.u_veiculo
-            LEFT JOIN motorista m ON e.u_motorista = m.u_motorista
-            LEFT JOIN usuario u ON m.u_motorista = u.u_motorista
+            LEFT JOIN rota r ON e.id_rota = r.id_rota
+            LEFT JOIN veiculo v ON e.id_veiculo = v.id_veiculo
+            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
+            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
             WHERE e.dataprevista < CURDATE() 
             AND e.status NOT IN ('ENTREGUE', 'CANCELADA')
             ORDER BY e.dataprevista ASC
             LIMIT 10
             """
-            return execute_query(sql, fetch=True) or []
+            result = execute_query(sql, fetch_all=True)
+            return result or []
             
         except Exception as e:
             print(f"Erro ao buscar entregas atrasadas: {e}")

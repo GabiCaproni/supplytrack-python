@@ -1,123 +1,116 @@
 from flask import Blueprint, request, jsonify
-from models.entrega import EntregaModel
+from controllers.entregaController import EntregaController
 
-entrega_bp = Blueprint('entregas', __name__)
+entrega_bp = Blueprint('entrega', __name__)
 
 @entrega_bp.route('/entregas', methods=['GET'])
 def listar_entregas():
     """Lista todas as entregas"""
     try:
-        filtro_status = request.args.get('status')
-        entregas = EntregaModel.listar_entregas(filtro_status)
+        print("📨 GET /api/entregas - Listando todas as entregas")
         
-        return jsonify({
-            'success': True,
-            'entregas': entregas
-        }), 200
+        success, result = EntregaController.listar_entregas()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'entregas': result,
+                'total': len(result)
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': result
+            }), 400
+            
     except Exception as e:
+        print(f"❌ Erro na rota GET /entregas: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
+        }), 500
+
+@entrega_bp.route('/entregas/ativas', methods=['GET'])
+def listar_entregas_ativas():
+    """Lista apenas entregas ativas"""
+    try:
+        print("📨 GET /api/entregas/ativas - Listando entregas ativas")
+        
+        success, result = EntregaController.listar_entregas_ativas()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'entregas': result,
+                'total': len(result)
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': result
+            }), 400
+            
+    except Exception as e:
+        print(f"❌ Erro na rota GET /entregas/ativas: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro interno: {str(e)}'
         }), 500
 
 @entrega_bp.route('/entregas', methods=['POST'])
 def criar_entrega():
     """Cria uma nova entrega"""
     try:
-        data = request.get_json()
+        print("📨 POST /api/entregas - Criando entrega")
         
-        entrega_id, mensagem = EntregaModel.criar_entrega(
-            data['dataprevista'],
-            data['u_rota'],
-            data['u_veiculo'],
-            data['u_motorista'],
-            data['idcarga'],
-            data.get('status', 'PENDENTE')
+        # Pegar dados do request
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form.to_dict()
+        
+        print(f"📦 Dados recebidos: {data}")
+        
+        # Extrair dados
+        data_entrega = data.get('data_entrega')
+        status = data.get('status', 'PENDENTE')
+        local_entrega = data.get('local_entrega')
+        id_rota = data.get('id_rota')
+        id_carga = data.get('id_carga')
+        observacoes = data.get('observacoes')
+        
+        # Validar campos obrigatórios
+        if not all([data_entrega, status, local_entrega]):
+            return jsonify({
+                'success': False,
+                'error': 'Campos obrigatórios faltando: data_entrega, status, local_entrega'
+            }), 400
+        
+        # Chamar controller
+        success, result = EntregaController.criar_entrega(
+            data_entrega=data_entrega,
+            status=status,
+            local_entrega=local_entrega,
+            id_rota=id_rota,
+            id_carga=id_carga,
+            observacoes=observacoes
         )
         
-        if entrega_id:
+        if success:
             return jsonify({
                 'success': True,
-                'message': mensagem,
-                'entrega_id': entrega_id
+                'message': result.get('message'),
+                'id_entrega': result.get('id_entrega')
             }), 201
         else:
             return jsonify({
                 'success': False,
-                'message': mensagem
+                'error': result
             }), 400
             
     except Exception as e:
+        print(f"❌ Erro no routes POST /entregas: {str(e)}")
         return jsonify({
             'success': False,
-            'error': str(e)
-        }), 500
-
-@entrega_bp.route('/entregas/<int:identrega>/status', methods=['PUT'])
-def atualizar_status_entrega(identrega):
-    """Atualiza status de uma entrega"""
-    try:
-        data = request.get_json()
-        novo_status = data.get('status')
-        observacoes = data.get('observacoes')
-        
-        if not novo_status:
-            return jsonify({
-                'success': False,
-                'message': 'Status é obrigatório'
-            }), 400
-        
-        # Para atualização geral (admin)
-        success, message = EntregaModel.atualizar_status(identrega, novo_status, observacoes)
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'message': message
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'message': message
-            }), 400
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@entrega_bp.route('/motorista/<int:u_motorista>/entregas/<int:identrega>/status', methods=['PUT'])
-def motorista_atualizar_status(u_motorista, identrega):
-    """Motorista atualiza status da sua entrega"""
-    try:
-        data = request.get_json()
-        novo_status = data.get('status')
-        observacoes = data.get('observacoes')
-        
-        if not novo_status:
-            return jsonify({
-                'success': False,
-                'message': 'Status é obrigatório'
-            }), 400
-        
-        success, message = EntregaModel.atualizar_status_motorista(
-            identrega, u_motorista, novo_status, observacoes
-        )
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'message': message
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'message': message
-            }), 400
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
+            'error': f'Erro interno: {str(e)}'
         }), 500

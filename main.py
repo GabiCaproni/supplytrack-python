@@ -35,7 +35,11 @@ class SupplyTrackSystem:
             if self.usuario_logado and self.usuario_logado['tipo_perfil'] == 'MOTORISTA':
                 print("8. 🚗 Área do Motorista")
             
-            print("0. 🚪 Sair" if self.usuario_logado else "0. 🔐 Login")
+            # CORREÇÃO: Opção única para Sair/Login
+            if self.usuario_logado:
+                print("0. 🚪 Sair do programa")
+            else:
+                print("0. 🔐 Login")
             
             opcao = input("\nEscolha uma opção: ")
             
@@ -68,13 +72,18 @@ class SupplyTrackSystem:
         self.limpar_tela()
         print("🔐 LOGIN")
         print("=" * 20)
-        email = input("Email: ")
-        senha = input("Senha: ")
+        email = input("Email: ").strip()
+        senha = input("Senha: ").strip()
+        
+        # Validação básica
+        if not email or not senha:
+            input("❌ Email e senha são obrigatórios! Pressione Enter para continuar...")
+            return
         
         usuario = UsuarioModel.verificar_login(email, senha)
         if usuario:
             self.usuario_logado = usuario
-            input("✅ Login realizado com sucesso! Pressione Enter para continuar...")
+            input(f"✅ Login realizado com sucesso! Bem-vindo(a), {usuario['nome']}! Pressione Enter para continuar...")
         else:
             input("❌ Email ou senha incorretos! Pressione Enter para continuar...")
     
@@ -82,6 +91,11 @@ class SupplyTrackSystem:
         self.limpar_tela()
         print("📊 DASHBOARD")
         print("=" * 30)
+        
+        # Verifica se usuário está logado
+        if not self.usuario_logado:
+            input("❌ Você precisa estar logado para acessar o dashboard. Pressione Enter para continuar...")
+            return
         
         stats = Dashboard.obter_estatisticas()
         
@@ -110,9 +124,15 @@ class SupplyTrackSystem:
         print("👥 CADASTRO DE USUÁRIO")
         print("=" * 30)
         
-        nome = input("Nome: ")
-        email = input("Email: ")
-        senha = input("Senha: ")
+        nome = input("Nome: ").strip()
+        email = input("Email: ").strip()
+        senha = input("Senha: ").strip()
+        
+        # Validação básica
+        if not nome or not email or not senha:
+            input("❌ Todos os campos são obrigatórios! Pressione Enter para continuar...")
+            return
+        
         print("Tipo de Perfil (ADMIN, MOTORISTA, OPERADOR): ")
         tipo_perfil = input().upper()
         
@@ -128,22 +148,32 @@ class SupplyTrackSystem:
         print("🚛 CADASTRO DE VEÍCULO")
         print("=" * 30)
         
-        placa = input("Placa: ")
-        capacidade = input("Capacidade (ex: 2000 kg): ")
+        placa = input("Placa: ").strip()
+        capacidade = input("Capacidade (ex: 2000 kg): ").strip()
+        
+        if not placa or not capacidade:
+            input("❌ Placa e capacidade são obrigatórios! Pressione Enter para continuar...")
+            return
         
         print("Deseja vincular a um motorista? (s/n): ")
-        if input().lower() == 's':
+        opcao_motorista = input().lower()
+        
+        id_motorista = None
+        if opcao_motorista == 's':
             motoristas = MotoristaModel.listar_motoristas()
-            print("\nMotoristas disponíveis:")
-            for motorista in motoristas:
-                print(f"{motorista['id_motorista']}. {motorista['nome']} - {motorista['cnh']}")
-            
-            try:
-                id_motorista = int(input("\nID do motorista: "))
-            except:
-                id_motorista = None
-        else:
-            id_motorista = None
+            if motoristas:
+                print("\nMotoristas disponíveis:")
+                for motorista in motoristas:
+                    print(f"{motorista['id_motorista']}. {motorista['nome']} - {motorista['cnh']}")
+                
+                try:
+                    id_motorista = int(input("\nID do motorista: "))
+                except ValueError:
+                    input("❌ ID inválido! Pressione Enter para continuar...")
+                    return
+            else:
+                input("❌ Nenhum motorista disponível. Pressione Enter para continuar...")
+                return
         
         veiculo_id, mensagem = VeiculoModel.cadastrar(placa, capacidade, id_motorista)
         input(f"{mensagem} Pressione Enter para continuar...")
@@ -153,10 +183,13 @@ class SupplyTrackSystem:
         print("📦 CADASTRO DE CARGA")
         print("=" * 30)
         
-        volume = input("Volume (ex: 15 m³): ")
-        peso = input("Peso (ex: 800 kg): ")
+        volume = input("Volume (ex: 15 m³): ").strip()
+        peso = input("Peso (ex: 800 kg): ").strip()
         
-        # Listar armazéns disponíveis (em um sistema real, buscaria do banco)
+        if not volume or not peso:
+            input("❌ Volume e peso são obrigatórios! Pressione Enter para continuar...")
+            return
+        
         print("\nArmazéns disponíveis:")
         print("1. Armazém Centro")
         print("2. Armazém Zona Norte")
@@ -164,8 +197,12 @@ class SupplyTrackSystem:
         
         try:
             id_armazem = int(input("\nID do armazém (1-3): "))
-        except:
-            id_armazem = 1
+            if id_armazem not in [1, 2, 3]:
+                input("❌ ID do armazém inválido! Pressione Enter para continuar...")
+                return
+        except ValueError:
+            input("❌ ID inválido! Pressione Enter para continuar...")
+            return
         
         carga_id, mensagem = CargaModel.cadastrar(volume, peso, id_armazem)
         input(f"{mensagem} Pressione Enter para continuar...")
@@ -175,32 +212,46 @@ class SupplyTrackSystem:
         print("🗺️ CRIAR ROTA")
         print("=" * 30)
         
-        data_saida = input("Data de saída (YYYY-MM-DD): ")
-        distancia = input("Distância (ex: 350 km): ")
+        data_saida = input("Data de saída (YYYY-MM-DD): ").strip()
+        distancia = input("Distância (ex: 350 km): ").strip()
+        
+        if not data_saida or not distancia:
+            input("❌ Data e distância são obrigatórios! Pressione Enter para continuar...")
+            return
         
         # Listar veículos disponíveis
         veiculos = VeiculoModel.listar_veiculos()
+        veiculos_disponiveis = [v for v in veiculos if v['status'] == 'DISPONIVEL']
+        
+        if not veiculos_disponiveis:
+            input("❌ Nenhum veículo disponível! Pressione Enter para continuar...")
+            return
+        
         print("\nVeículos disponíveis:")
-        for veiculo in veiculos:
-            if veiculo['status'] == 'DISPONIVEL':
-                print(f"{veiculo['id_veiculo']}. {veiculo['placa']} - {veiculo['capacidade']}")
+        for veiculo in veiculos_disponiveis:
+            print(f"{veiculo['id_veiculo']}. {veiculo['placa']} - {veiculo['capacidade']}")
         
         try:
             id_veiculo = int(input("\nID do veículo: "))
-        except:
+        except ValueError:
             input("❌ ID inválido! Pressione Enter para continuar...")
             return
         
-        # Listar motoristas
+        # Listar motoristas disponíveis
         motoristas = MotoristaModel.listar_motoristas()
+        motoristas_disponiveis = [m for m in motoristas if m['status'] == 'LIVRE']
+        
+        if not motoristas_disponiveis:
+            input("❌ Nenhum motorista disponível! Pressione Enter para continuar...")
+            return
+        
         print("\nMotoristas disponíveis:")
-        for motorista in motoristas:
-            if motorista['status'] == 'LIVRE':
-                print(f"{motorista['id_motorista']}. {motorista['nome']} - {motorista['cnh']}")
+        for motorista in motoristas_disponiveis:
+            print(f"{motorista['id_motorista']}. {motorista['nome']} - {motorista['cnh']}")
         
         try:
             id_motorista = int(input("\nID do motorista: "))
-        except:
+        except ValueError:
             input("❌ ID inválido! Pressione Enter para continuar...")
             return
         
@@ -209,7 +260,7 @@ class SupplyTrackSystem:
         if rota_id:
             # Atualizar status do veículo e motorista
             VeiculoModel.atualizar_status(id_veiculo, 'EM_USO')
-            # Aqui atualizaria o status do motorista também
+            MotoristaModel.atualizar_status(id_motorista, 'EM_VIAGEM')
             
             # Criar alerta de nova rota
             AlertaModel.criar_alerta('OUTRO', f'Nova rota criada: {distancia}', rota_id, id_veiculo, id_motorista)
@@ -225,6 +276,7 @@ class SupplyTrackSystem:
         print("3. 📦 Cargas")
         print("4. 🛣️ Rotas")
         print("5. ⚠️ Alertas")
+        print("6. ↩️ Voltar")
         
         opcao = input("\nEscolha uma opção: ")
         
@@ -243,6 +295,8 @@ class SupplyTrackSystem:
         elif opcao == '5':
             dados = AlertaModel.listar_alertas()
             titulo = "ALERTAS"
+        elif opcao == '6':
+            return
         else:
             input("❌ Opção inválida! Pressione Enter para continuar...")
             return
@@ -274,12 +328,15 @@ class SupplyTrackSystem:
                 print(f"{status_emoji} {alerta['tipo']} - {alerta['horario']} - {alerta['status']}")
         
         print("\n1. Criar novo alerta")
-        print("2. Voltar")
+        print("2. Fechar alerta")
+        print("3. Voltar")
         
         opcao = input("\nEscolha uma opção: ")
         
         if opcao == '1':
             self.criar_alerta()
+        elif opcao == '2':
+            self.fechar_alerta()
     
     def criar_alerta(self):
         self.limpar_tela()
@@ -293,8 +350,33 @@ class SupplyTrackSystem:
             input("❌ Tipo de alerta inválido! Pressione Enter para continuar...")
             return
         
-        alerta_id, mensagem = AlertaModel.criar_alerta(tipo, "Alerta criado manualmente")
+        descricao = input("Descrição do alerta: ").strip()
+        if not descricao:
+            descricao = "Alerta criado manualmente"
+        
+        alerta_id, mensagem = AlertaModel.criar_alerta(tipo, descricao)
         input(f"{mensagem} Pressione Enter para continuar...")
+    
+    def fechar_alerta(self):
+        self.limpar_tela()
+        print("✅ FECHAR ALERTA")
+        print("=" * 20)
+        
+        alertas = AlertaModel.listar_alertas_abertos()
+        if not alertas:
+            input("❌ Nenhum alerta aberto encontrado! Pressione Enter para continuar...")
+            return
+        
+        print("Alertas abertos:")
+        for alerta in alertas:
+            print(f"{alerta['id_alerta']}. {alerta['tipo']} - {alerta['descricao']}")
+        
+        try:
+            id_alerta = int(input("\nID do alerta a fechar: "))
+            sucesso, mensagem = AlertaModel.fechar_alerta(id_alerta)
+            input(f"{mensagem} Pressione Enter para continuar...")
+        except ValueError:
+            input("❌ ID inválido! Pressione Enter para continuar...")
     
     def area_motorista(self):
         self.limpar_tela()
@@ -302,29 +384,86 @@ class SupplyTrackSystem:
         print("=" * 30)
         print(f"Bem-vindo, {self.usuario_logado['nome']}!")
         
-        # Simular atualização de status de entrega
+        # Buscar rotas do motorista atual
+        motorista = MotoristaModel.buscar_por_usuario_id(self.usuario_logado['id_usuario'])
+        if not motorista:
+            input("❌ Perfil de motorista não encontrado! Pressione Enter para continuar...")
+            return
+        
+        rotas = RotaModel.listar_rotas_por_motorista(motorista['id_motorista'])
+        
         print("\n1. 📋 Minhas rotas")
         print("2. ✅ Atualizar status de entrega")
         print("3. ↩️ Voltar")
         
         opcao = input("\nEscolha uma opção: ")
         
-        if opcao == '2':
-            self.atualizar_status_entrega()
+        if opcao == '1':
+            self.minhas_rotas(motorista['id_motorista'])
+        elif opcao == '2':
+            self.atualizar_status_entrega(motorista['id_motorista'])
     
-    def atualizar_status_entrega(self):
+    def minhas_rotas(self, id_motorista):
+        self.limpar_tela()
+        print("📋 MINHAS ROTAS")
+        print("=" * 25)
+        
+        rotas = RotaModel.listar_rotas_por_motorista(id_motorista)
+        
+        if not rotas:
+            print("Nenhuma rota atribuída.")
+        else:
+            for rota in rotas:
+                status_emoji = {
+                    'PLANEJADA': '📅',
+                    'EM_ANDAMENTO': '🚚',
+                    'CONCLUIDA': '✅',
+                    'CANCELADA': '❌'
+                }
+                print(f"{status_emoji.get(rota['status'], '📦')} Rota {rota['id_rota']} - {rota['distancia']} - Status: {rota['status']}")
+        
+        input("\nPressione Enter para voltar...")
+    
+    def atualizar_status_entrega(self, id_motorista):
         self.limpar_tela()
         print("✅ ATUALIZAR STATUS DE ENTREGA")
         print("=" * 35)
         
-        # Simulação - em um sistema real, buscaria as entregas do motorista
-        print("Simulação: Status de entrega atualizado para 'ENTREGUE'")
-        print("No sistema completo, aqui o motorista poderia:")
-        print("- Visualizar suas entregas pendentes")
-        print("- Atualizar status em tempo real")
-        print("- Registrar problemas ou observações")
+        rotas = RotaModel.listar_rotas_por_motorista(id_motorista)
+        rotas_ativas = [r for r in rotas if r['status'] in ['PLANEJADA', 'EM_ANDAMENTO']]
         
-        input("\nPressione Enter para continuar...")
+        if not rotas_ativas:
+            input("❌ Nenhuma rota ativa para atualizar! Pressione Enter para continuar...")
+            return
+        
+        print("Rotas ativas:")
+        for rota in rotas_ativas:
+            print(f"{rota['id_rota']}. {rota['distancia']} - Status atual: {rota['status']}")
+        
+        try:
+            id_rota = int(input("\nID da rota: "))
+            print("\nNovo status:")
+            print("1. 🚚 EM_ANDAMENTO")
+            print("2. ✅ CONCLUIDA")
+            print("3. ❌ CANCELADA")
+            
+            opcao_status = input("\nEscolha o novo status: ")
+            
+            status_map = {
+                '1': 'EM_ANDAMENTO',
+                '2': 'CONCLUIDA',
+                '3': 'CANCELADA'
+            }
+            
+            novo_status = status_map.get(opcao_status)
+            if novo_status:
+                sucesso, mensagem = RotaModel.atualizar_status(id_rota, novo_status)
+                input(f"{mensagem} Pressione Enter para continuar...")
+            else:
+                input("❌ Opção inválida! Pressione Enter para continuar...")
+                
+        except ValueError:
+            input("❌ ID inválido! Pressione Enter para continuar...")
 
 if __name__ == "__main__":
     system = SupplyTrackSystem()

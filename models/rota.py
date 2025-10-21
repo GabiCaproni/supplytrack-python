@@ -2,98 +2,75 @@ from database.connection import execute_query
 
 class RotaModel:
     @staticmethod
-    def criar_rota(data_saida, distancia, id_veiculo, id_motorista):
-        """Cria uma nova rota"""
+    def cadastrar(dataSaida, dataEntrega, distancia, status):
+        """Cadastra uma nova rota"""
         try:
+            print(f"🎯 MODEL - Cadastrando rota:")
+            print(f"   dataSaida: {dataSaida}")
+            print(f"   dataEntrega: {dataEntrega}") 
+            print(f"   distancia: {distancia}")
+            print(f"   status: {status}")
+            
+            # ✅ CORRIGIDO: Mapear status para valores válidos do ENUM
+            status_validos = {
+                'PLANEJADA': 'PENDENTE',  # Mapear PLANEJADA para PENDENTE
+                'PENDENTE': 'PENDENTE',
+                'EM_TRANSITO': 'EM_ANDAMENTO',  # Mapear EM_TRANSITO para EM_ANDAMENTO
+                'EM_ANDAMENTO': 'EM_ANDAMENTO',
+                'ENTREGUE': 'CONCLUIDA',  # Mapear ENTREGUE para CONCLUIDA
+                'CONCLUIDA': 'CONCLUIDA',
+                'CANCELADA': 'CANCELADA',
+                'ATRASADA': 'PENDENTE'  # Mapear ATRASADA para PENDENTE
+            }
+            
+            # Converter status para valor válido
+            status_valido = status_validos.get(status, 'PENDENTE')
+            print(f"🔄 Status convertido: '{status}' → '{status_valido}'")
+            
             sql = """
-            INSERT INTO rota (DataSaida, distancia, status, id_veiculo, id_motorista) 
-            VALUES (%s, %s, 'PENDENTE', %s, %s)
+            INSERT INTO rota (DataSaida, dataEntrega, distancia, status) 
+            VALUES (%s, %s, %s, %s)
             """
-            params = (data_saida, distancia, id_veiculo, id_motorista)
+            params = (dataSaida, dataEntrega, distancia, status_valido)
+            
+            print(f"🔍 SQL: {sql}")
+            print(f"🔍 Params: {params}")
             
             rota_id = execute_query(sql, params)
             
-            # Correção no retorno - removendo a tupla duplicada
             if rota_id:
-                return rota_id, "Rota criada com sucesso"
+                return rota_id, "✅ Rota cadastrada com sucesso"
             else:
-                return None, "Erro ao criar rota"
+                return None, "❌ Erro ao cadastrar rota"
                 
         except Exception as e:
-            return None, f"Erro: {str(e)}"
+            print(f"❌ Erro no model: {str(e)}")
+            return None, f"❌ Erro interno: {str(e)}"
 
     @staticmethod
     def listar_rotas():
         """Lista todas as rotas"""
         try:
-            sql = """
-            SELECT r.*, v.placa, u.nome as motorista_nome 
-            FROM rota r 
-            LEFT JOIN veiculo v ON r.id_veiculo = v.id_veiculo 
-            LEFT JOIN motorista m ON r.id_motorista = m.id_motorista 
-            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
-            ORDER BY r.DataSaida DESC
-            """
-            result = execute_query(sql, fetch_all=True)
-            return result if result else []
-        except Exception as e:
-            print(f"Erro ao listar rotas: {str(e)}")
-            return []
-
-    @staticmethod
-    def atualizar_status_rota(id_rota, status):
-        """Atualiza o status de uma rota"""
-        try:
-            sql = "UPDATE rota SET status = %s WHERE idRota = %s"
-            result = execute_query(sql, (status, id_rota))
-            return result is not None
-        except Exception as e:
-            print(f"Erro ao atualizar status da rota: {str(e)}")
-            return False
-
-    @staticmethod
-    def criar_entrega(id_rota, data_prevista, id_motorista):
-        """Cria uma entrega para uma rota"""
-        try:
-            sql = """
-            INSERT INTO entrega (idRota, dataPrevista, status, id_motorista) 
-            VALUES (%s, %s, 'PENDENTE', %s)
-            """
-            result = execute_query(sql, (id_rota, data_prevista, id_motorista))
+            print("📋 MODEL - Listando rotas do banco")
             
-            # Retorno consistente
-            if result:
-                return result, "Entrega criada com sucesso"
-            else:
-                return None, "Erro ao criar entrega"
-                
-        except Exception as e:
-            return None, f"Erro ao criar entrega: {str(e)}"
-
-    @staticmethod
-    def buscar_por_id(id_rota):
-        """Busca uma rota pelo ID"""
-        try:
             sql = """
-            SELECT r.*, v.placa, u.nome as motorista_nome 
-            FROM rota r 
-            LEFT JOIN veiculo v ON r.id_veiculo = v.id_veiculo 
-            LEFT JOIN motorista m ON r.id_motorista = m.id_motorista 
-            LEFT JOIN usuario u ON m.id_usuario = u.id_usuario
-            WHERE r.idRota = %s
+            SELECT 
+                idRota,
+                DataSaida,
+                dataEntrega,
+                distancia,
+                status,
+                id_veiculo,
+                id_motorista
+            FROM rota 
+            ORDER BY DataSaida DESC
             """
-            return execute_query(sql, (id_rota,), fetch_one=True)
+            
+            rotas = execute_query(sql, fetch_all=True)
+            print(f"📊 Rotas recuperadas: {len(rotas) if rotas else 0}")
+            
+            return rotas or []
+            
         except Exception as e:
-            print(f"Erro ao buscar rota: {str(e)}")
-            return None
-
-    @staticmethod
-    def adicionar_carga_rota(id_rota, id_carga):
-        """Adiciona uma carga à rota"""
-        try:
-            sql = "INSERT INTO rota_carga (idRota, id_carga) VALUES (%s, %s)"
-            result = execute_query(sql, (id_rota, id_carga))
-            return result is not None
-        except Exception as e:
-            print(f"Erro ao adicionar carga à rota: {str(e)}")
-            return False
+            print(f"❌ Erro ao listar rotas no model: {e}")
+            return []
