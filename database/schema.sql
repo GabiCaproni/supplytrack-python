@@ -1,6 +1,6 @@
 
-CREATE SCHEMA IF NOT EXISTS `Roteirizacao` DEFAULT CHARACTER SET utf8 ;
-USE `Roteirizacao` ;
+CREATE SCHEMA IF NOT EXISTS `supplytrack` DEFAULT CHARACTER SET utf8 ;
+USE `supplytrack` ;
 
 -- Tabela: usuario
 CREATE TABLE IF NOT EXISTS `usuario` (

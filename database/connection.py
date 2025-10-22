@@ -15,7 +15,7 @@ class DatabaseConnection:
             self.connection = mysql.connector.connect(
                 host='localhost',
                 user='root', 
-                password='1234',
+                password='',
                 database='supplytrack',
                 charset='utf8'
             )

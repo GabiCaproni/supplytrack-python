@@ -1,0 +1,43 @@
+# ====================================
+# Arquivos e Pastas de Ambiente Virtual
+# ====================================
+# Ignora a pasta do ambiente virtual que contém as dependências instaladas.
+# Isso garante que apenas o código-fonte seja enviado.
+venv/
+.venv/
+env/
+.env/
+
+# ====================================
+# Arquivos de Configuração e Credenciais
+# ====================================
+# CRÍTICO: Ignora o arquivo de variáveis de ambiente que contém a senha do MySQL e a SECRET_KEY.
+.env
+
+# Arquivos de log e testes
+*.log
+*.sqlite
+*.db
+
+# ====================================
+# Arquivos de Compilação e Cache
+# ====================================
+# Pastas de cache do Python (bytecode)
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Arquivos de bytecode (gerados ao executar o Python)
+*.pyc
+*.pyo
+*.pyd
+
+# ====================================
+# IDEs e Ferramentas Comuns
+# ====================================
+# Visual Studio Code
+.vscode/
+
+# PyCharm
+.idea/

@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class UsuarioModel:
     @staticmethod
-    def cadastrar(nome, email, senha, tipo_perfil):
+    def cadastrar(nome, email, cpf, senha, tipo_perfil): # CPF ADICIONADO AQUI
         """Cadastra um novo usuário"""
         try:
             # Verificar se email já existe
@@ -14,10 +14,10 @@ class UsuarioModel:
             senha_hash = generate_password_hash(senha)
             
             sql = """
-            INSERT INTO usuario (nome, email, senha, tipo_perfil) 
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO usuario (nome, email, cpf, senha, tipo_perfil) 
+            VALUES (%s, %s, %s, %s, %s)
             """
-            params = (nome, email, senha_hash, tipo_perfil)
+            params = (nome, email, cpf, senha_hash, tipo_perfil) # CPF ADICIONADO AQUI
             
             usuario_id = execute_query(sql, params)
             
@@ -37,7 +37,6 @@ class UsuarioModel:
         except Exception as e:
             print(f"✗ Erro no cadastro de usuário: {e}")
             return None, f"❌ Erro interno: {str(e)}"
-
     @staticmethod
     def buscar_por_email(email):
         """Busca usuário por email."""

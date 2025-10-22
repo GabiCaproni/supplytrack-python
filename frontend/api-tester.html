@@ -168,6 +168,12 @@
                     <label>Email:</label>
                     <input type="email" id="user-email" placeholder="joao@email.com">
                 </div>
+                
+                <div class="form-group">
+                    <label>CPF:</label>
+                    <input type="text" id="user-cpf" placeholder="000.000.000-00">
+                </div>
+                
                 <div class="form-group">
                     <label>Senha:</label>
                     <input type="password" id="user-senha" placeholder="123456">
@@ -339,6 +345,7 @@
             const data = {
                 nome: document.getElementById('user-nome').value,
                 email: document.getElementById('user-email').value,
+                cpf: document.getElementById('user-cpf').value, // <--- CAMPO CPF ADICIONADO AQUI
                 senha: document.getElementById('user-senha').value,
                 tipo_perfil: document.getElementById('user-tipo').value
             };
