@@ -109,6 +109,7 @@
         .status.atrasada { background: #f8d7da; color: #721c24; }
         .status.pendente { background: #d1ecf1; color: #0c5460; }
         .status.problema { background: #f8d7da; color: #721c24; }
+        .status.nao_entregue { background: #f8d7da; color: #721c24; }
         .alerta.critico { color: #dc3545; font-weight: bold; }
         .loading { text-align: center; padding: 20px; color: #666; }
         .ultima-atualizacao {
@@ -163,7 +164,7 @@
             </div>
             
             <div class="lista">
-                <h3>📦 Entregas de Hoje</h3>
+                <h3>📦 Entregas em Andamento</h3>
                 <div id="entregas-hoje" class="loading">Carregando entregas...</div>
             </div>
         </div>
@@ -171,7 +172,7 @@
         <!-- ENTREGAS RECENTES E GRÁFICO -->
         <div class="grid-2col">
             <div class="lista">
-                <h3>🕒 Entregas Recentes</h3>
+                <h3>🕒 Todas as Entregas</h3>
                 <div id="entregas-recentes" class="loading">Carregando entregas...</div>
             </div>
             
@@ -188,99 +189,84 @@
     </div>
 
     <script>
-        // Dados de exemplo para quando a API não estiver disponível
-        const dadosExemplo = {
+        // Dados baseados no arquivo que você forneceu
+        const dadosReais = {
             success: true,
             data: {
                 estatisticas_principais: {
-                    entregues: 42,
-                    taxa_entrega: 87,
-                    em_transito: 15,
-                    atrasadas: 8,
-                    taxa_atraso: 13
+                    entregues: 2, // IDs 1 e 2
+                    total_entregas: 4,
+                    taxa_entrega: 50, // 2/4 = 50%
+                    em_transito: 1, // ID 3
+                    atrasadas: 0, // Nenhuma marcada como atrasada
+                    taxa_atraso: 0
                 },
                 metricas_operacionais: {
-                    tempo_medio_entrega: "2.3 dias",
-                    satisfacao_cliente: "94%",
-                    custo_medio_entrega: "R$ 45,20"
+                    tempo_medio_entrega: "0 dias",
+                    satisfacao_cliente: "100%",
+                    custo_medio_entrega: "R$ --"
                 },
                 alertas: {
-                    ativos: 5,
-                    criticos: 2,
+                    ativos: 1,
+                    criticos: 1,
                     lista: [
                         {
-                            tipo: "ATRASO",
-                            titulo: "Atraso na rota SP-001",
-                            descricao: "Entrega #ORD-123 com atraso de 2h",
+                            tipo: "PROBLEMA",
+                            titulo: "Entrega não realizada",
+                            descricao: "Entrega #4 não foi realizada",
                             criado_em: new Date().toISOString()
-                        },
-                        {
-                            tipo: "PERIGO",
-                            titulo: "Problema no veículo",
-                            descricao: "Veículo ABC-1234 com problema mecânico",
-                            criado_em: new Date(Date.now() - 30*60000).toISOString()
-                        },
-                        {
-                            tipo: "AVISO",
-                            titulo: "Rota alterada",
-                            descricao: "Mudança na rota RJ-045 devido a obras",
-                            criado_em: new Date(Date.now() - 60*60000).toISOString()
                         }
                     ]
                 },
                 entregas: {
-                    hoje: [
+                    em_andamento: [
                         {
-                            identrega: "ORD-456",
-                            destino: "Centro, São Paulo",
-                            placa: "ABC-1234",
-                            motorista_nome: "João Silva",
-                            status: "EM_TRANSITO"
-                        },
-                        {
-                            identrega: "ORD-457",
-                            destino: "Jardins, São Paulo",
-                            placa: "XYZ-5678",
-                            motorista_nome: "Maria Santos",
-                            status: "ENTREGUE"
-                        },
-                        {
-                            identrega: "ORD-458",
-                            destino: "Vila Olímpia, São Paulo",
-                            placa: "DEF-9012",
-                            motorista_nome: "Pedro Costa",
-                            status: "PENDENTE"
+                            id_entrega: 3,
+                            idRota: 2,
+                            dataPrevista: "2024-01-21",
+                            dataRealizada: null,
+                            status: "SAILI_PARA_ENTREGA",
+                            id_motorista: 2
                         }
                     ],
-                    recentes: [
+                    todas: [
                         {
-                            identrega: "ORD-455",
-                            destino: "Centro, Rio de Janeiro",
-                            dataprevista: new Date(Date.now() - 24*3600000).toISOString(),
-                            motorista_nome: "Carlos Oliveira",
-                            status: "ENTREGUE"
+                            id_entrega: 1,
+                            idRota: 1,
+                            dataPrevista: "2024-01-16",
+                            dataRealizada: "2024-01-16",
+                            status: "ENTREGUE",
+                            id_motorista: 1
                         },
                         {
-                            identrega: "ORD-454",
-                            destino: "Barra da Tijuca, Rio de Janeiro",
-                            dataprevista: new Date(Date.now() - 48*3600000).toISOString(),
-                            motorista_nome: "Ana Rodrigues",
-                            status: "ENTREGUE"
+                            id_entrega: 2,
+                            idRota: 1,
+                            dataPrevista: "2024-01-16",
+                            dataRealizada: "2024-01-16",
+                            status: "ENTREGUE",
+                            id_motorista: 1
                         },
                         {
-                            identrega: "ORD-453",
-                            destino: "Copacabana, Rio de Janeiro",
-                            dataprevista: new Date(Date.now() - 12*3600000).toISOString(),
-                            motorista_nome: "Roberto Alves",
-                            status: "ATRASADA"
+                            id_entrega: 3,
+                            idRota: 2,
+                            dataPrevista: "2024-01-21",
+                            dataRealizada: null,
+                            status: "SAILI_PARA_ENTREGA",
+                            id_motorista: 2
+                        },
+                        {
+                            id_entrega: 4,
+                            idRota: 2,
+                            dataPrevista: "2025-10-23",
+                            dataRealizada: "2025-10-22",
+                            status: "NAO_ENTREGUE",
+                            id_motorista: null
                         }
                     ],
                     por_status: [
-                        { status: "ENTREGUE", quantidade: 42 },
-                        { status: "EM_TRANSITO", quantidade: 15 },
-                        { status: "PENDENTE", quantidade: 10 },
-                        { status: "ATRASADA", quantidade: 8 },
-                        { status: "PROBLEMA", quantidade: 3 }
+                        { status: "ENTREGUE", quantidade: 2 },
+                        { status: "EM_TRANSITO", quantidade: 1 },
+                        { status: "NAO_ENTREGUE", quantidade: 1 }
                     ]
                 },
                 ultima_atualizacao: new Date().toLocaleTimeString()
@@ -293,24 +279,10 @@
                 // Esconder mensagem de erro
                 document.getElementById('error-message').style.display = 'none';
                 
-                // Tentar carregar da API
-                let response;
-                try {
-                    response = await fetch('/api/dashboard/data');
-                    if (!response.ok) {
-                        throw new Error(`API retornou status ${response.status}`);
-                    }
-                } catch (apiError) {
-                    console.warn('API não disponível, usando dados de exemplo:', apiError.message);
-                    // Usar dados de exemplo se a API não estiver disponível
-                    setTimeout(() => {
-                        processarDados(dadosExemplo);
-                    }, 500);
-                    return;
-                }
-                
-                const data = await response.json();
-                processarDados(data);
+                // Usar dados reais fornecidos
+                setTimeout(() => {
+                    processarDados(dadosReais);
+                }, 500);
                 
             } catch (error) {
                 console.error('Erro ao carregar dashboard:', error);
@@ -328,7 +300,7 @@
                 document.getElementById('ultima-atualizacao').textContent = 
                     `Última atualização: ${new Date().toLocaleTimeString()}`;
             } else {
-                mostrarErro('Estrutura de dados inválida da API');
+                mostrarErro('Estrutura de dados inválida');
             }
         }
 
@@ -410,7 +382,7 @@
             }
             
             const alertasHTML = alertas.map(alerta => {
-                const isCritico = alerta.tipo === 'ATRASO' || alerta.tipo === 'PERIGO';
+                const isCritico = alerta.tipo === 'PROBLEMA';
                 const time = new Date(alerta.criado_em).toLocaleTimeString();
                 
                 return `
@@ -431,50 +403,58 @@
 
         // Atualizar lista de entregas
         function atualizarEntregas(entregasData) {
-            // Entregas de hoje
-            const hojeHTML = entregasData.hoje.length > 0 ? 
-                entregasData.hoje.map(entrega => {
+            // Entregas em andamento
+            const andamentoHTML = entregasData.em_andamento.length > 0 ? 
+                entregasData.em_andamento.map(entrega => {
                     const statusClass = getStatusClass(entrega.status);
                     const statusText = formatStatusText(entrega.status);
                     
                     return `
                     <div class="item">
                         <div>
-                            <strong>#${entrega.identrega} - ${entrega.destino || 'N/D'}</strong>
+                            <strong>#${entrega.id_entrega} - Rota ${entrega.idRota}</strong>
                             <div style="font-size: 0.9em; color: #666;">
-                                ${entrega.placa || 'Sem veículo'} • ${entrega.motorista_nome || 'N/D'}
+                                Prevista: ${formatarData(entrega.dataPrevista)} • Motorista: ${entrega.id_motorista || 'N/D'}
                             </div>
                         </div>
                         <span class="status ${statusClass}">${statusText}</span>
                     </div>
                     `;
                 }).join('') : 
-                '<div class="item">📅 Nenhuma entrega para hoje</div>';
+                '<div class="item">📅 Nenhuma entrega em andamento</div>';
             
-            document.getElementById('entregas-hoje').innerHTML = hojeHTML;
+            document.getElementById('entregas-hoje').innerHTML = andamentoHTML;
 
-            // Entregas recentes
-            const recentesHTML = entregasData.recentes.length > 0 ? 
-                entregasData.recentes.map(entrega => {
+            // Todas as entregas
+            const todasHTML = entregasData.todas.length > 0 ? 
+                entregasData.todas.map(entrega => {
                     const statusClass = getStatusClass(entrega.status);
                     const statusText = formatStatusText(entrega.status);
-                    const data = new Date(entrega.dataprevista).toLocaleDateString();
                     
                     return `
                     <div class="item">
                         <div>
-                            <strong>#${entrega.identrega} - ${entrega.destino || 'N/D'}</strong>
+                            <strong>#${entrega.id_entrega} - Rota ${entrega.idRota}</strong>
                             <div style="font-size: 0.9em; color: #666;">
-                                ${data} • ${entrega.motorista_nome || 'N/D'}
+                                Prevista: ${formatarData(entrega.dataPrevista)} • 
+                                ${entrega.dataRealizada ? `Realizada: ${formatarData(entrega.dataRealizada)}` : 'Não realizada'} •
+                                Motorista: ${entrega.id_motorista || 'N/D'}
                             </div>
                         </div>
                         <span class="status ${statusClass}">${statusText}</span>
                     </div>
                     `;
                 }).join('') : 
-                '<div class="item">📭 Nenhuma entrega recente</div>';
+                '<div class="item">📭 Nenhuma entrega cadastrada</div>';
             
-            document.getElementById('entregas-recentes').innerHTML = recentesHTML;
+            document.getElementById('entregas-recentes').innerHTML = todasHTML;
+        }
+
+        // Função para formatar data
+        function formatarData(dataString) {
+            if (!dataString || dataString === '(NULL)') return 'N/D';
+            const data = new Date(dataString);
+            return data.toLocaleDateString('pt-BR');
         }
 
         // Função auxiliar para normalizar classes CSS de status
@@ -482,12 +462,14 @@
             if (!status) return 'pendente';
             
             const statusMap = {
+                'SAILI_PARA_ENTREGA': 'em_transito',
                 'EM_TRANSITO': 'em_transito',
                 'EM TRÂNSITO': 'em_transito', 
                 'ENTREGUE': 'entregue',
                 'ATRASADA': 'atrasada',
                 'PENDENTE': 'pendente',
-                'PROBLEMA': 'problema'
+                'PROBLEMA': 'problema',
+                'NAO_ENTREGUE': 'nao_entregue'
             };
             
             return statusMap[status] || status.toLowerCase().replace(' ', '_');
@@ -498,11 +480,13 @@
             if (!status) return 'Pendente';
             
             const statusMap = {
+                'SAILI_PARA_ENTREGA': 'Saiu para Entrega',
                 'EM_TRANSITO': 'Em Trânsito',
                 'ENTREGUE': 'Entregue',
                 'ATRASADA': 'Atrasada',
                 'PENDENTE': 'Pendente',
-                'PROBLEMA': 'Problema'
+                'PROBLEMA': 'Problema',
+                'NAO_ENTREGUE': 'Não Entregue'
             };
             
             return statusMap[status] || status;
@@ -522,10 +506,12 @@
             
             const colors = {
                 'Entregue': '#28a745',
-                'Em Trânsito': '#ffc107', 
+                'Em Trânsito': '#ffc107',
+                'Saiu para Entrega': '#ffc107',
                 'Pendente': '#17a2b8',
                 'Atrasada': '#dc3545',
-                'Problema': '#6f42c1'
+                'Problema': '#6f42c1',
+                'Não Entregue': '#dc3545'
             };
             
             const backgroundColors = labels.map(label => colors[label] || '#6c757d');

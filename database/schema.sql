@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `usuario` (
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(45) NOT NULL,
   `email` VARCHAR(45) NOT NULL UNIQUE,
+  `cpf` varchar(14) not null unique,
   `senha` VARCHAR(255) NOT NULL, -- Aumentado para hash de senha
   `tipo_perfil` ENUM('ADMIN', 'GESTOR', 'MOTORISTA') NOT NULL,
   PRIMARY KEY (`id_usuario`)
