@@ -2,7 +2,7 @@ from database.connection import execute_query
 
 class RotaModel:
     @staticmethod
-    def cadastrar(dataSaida, dataEntrega, distancia, status):
+    def criar_rota(dataSaida, dataEntrega, distancia, status):
         """Cadastra uma nova rota"""
         try:
             print(f"🎯 MODEL - Cadastrando rota:")

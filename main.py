@@ -125,6 +125,7 @@ class SupplyTrackSystem:
         print("=" * 30)
         
         nome = input("Nome: ").strip()
+        cpf = input("Cpf:" ).strip()
         email = input("Email: ").strip()
         senha = input("Senha: ").strip()
         
@@ -140,7 +141,7 @@ class SupplyTrackSystem:
             input("❌ Tipo de perfil inválido! Pressione Enter para continuar...")
             return
         
-        usuario_id, mensagem = UsuarioModel.cadastrar(nome, email, senha, tipo_perfil)
+        usuario_id, mensagem = UsuarioModel.cadastrar(nome, email, cpf, senha, tipo_perfil)
         input(f"{mensagem} Pressione Enter para continuar...")
     
     def cadastrar_veiculo(self):
